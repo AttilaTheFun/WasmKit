@@ -16,6 +16,11 @@ import WAT
                 i64.const 9876543210123 call $identity
                 \(additions)
                 local.get 0)
+              (func (export "deep") (param i64) (result i64)
+                \(String(repeating: "i64.const 0 ", count: 130))
+                \(additions)
+                \(String(repeating: "drop ", count: 130))
+                local.get 0)
               (func (export "branch") (param i64 i32) (result i64 i64)
                 i64.const 1234567890123
                 local.get 1 if
@@ -30,9 +35,11 @@ import WAT
             let instance = try module.instantiate(store: store)
             let add = try #require(instance.exports[function: "add"])
             let live = try #require(instance.exports[function: "live"])
+            let deep = try #require(instance.exports[function: "deep"])
             let branch = try #require(instance.exports[function: "branch"])
             for x: UInt64 in [0, 17, .max] {
                 #expect(try add([.i64(x)]) == [.i64(x &+ 820)])
+                #expect(try deep([.i64(x)]) == [.i64(x &+ 820)])
                 #expect(try live([.i64(x)]) == [.i64(1234567890123), .i64(9876543210123), .i64(x &+ 820)])
                 #expect(try branch([.i64(x), .i32(1)]) == [.i64(1234567890123), .i64(x &+ 820)])
                 #expect(try branch([.i64(x), .i32(0)]) == [.i64(1234567890123), .i64(3)])

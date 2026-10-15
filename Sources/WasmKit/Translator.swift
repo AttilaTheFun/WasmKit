@@ -5257,7 +5257,9 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         // constant, it is written to its stack slot here instead.
         let value = UntypedValue(value)
         var reserved = constantSlots.reserve(value)
-        if !reserved, constantSlots.hasUnallocatedReservations {
+        // Keep reclamation work bounded even for a growing guest value stack.
+        // Larger stacks retain the original conservative reservation behavior.
+        if !reserved, constantSlots.hasUnallocatedReservations, valueStack.valueHeight <= 128 {
             constantSlots.reclaimUnusedReservations(keepingLive: valueStack.liveConstants)
             reserved = constantSlots.reserve(value)
         }
