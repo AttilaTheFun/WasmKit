@@ -452,6 +452,7 @@ extension Execution {
         case 737: return self.execute_selectSharedMemory(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 738: return self.execute_i64XorShiftImm(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 739: return self.execute_i64XorShiftMulImm(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 740: return self.execute_i32AddImmGlobalSet(sp: &sp, pc: &pc, md: &md, ms: &ms)
         default: preconditionFailure("Unknown instruction!?")
 
         }
@@ -7248,6 +7249,14 @@ sp.pointee[i64: immediate.result] = input ^ (input &>> UInt64(immediate.shift))
         let input = sp.pointee[i64: immediate.input]
 let mixed = input ^ (input &>> UInt64(immediate.shift))
 sp.pointee[i64: immediate.result] = mixed &* sp.pointee[i64: immediate.multiplier]
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32AddImmGlobalSet") @inline(__always)
+    mutating func execute_i32AddImmGlobalSet(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.I32AddImmGlobalSetOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        self.i32AddImmGlobalSet(sp: sp.pointee, immediate: immediate)
         return next
     }
 }
