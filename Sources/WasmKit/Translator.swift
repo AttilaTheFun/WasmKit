@@ -2035,6 +2035,7 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         private var copyAfterAcc: (producer: AccProducer, source: VReg, dest: VReg, end: MetaProgramCounter)?
         /// The last emitted single copy, for pairing it with the next one.
         private var lastCopy: (source: VReg, dest: VReg, position: MetaProgramCounter, end: MetaProgramCounter)?
+        fileprivate var xorShift: (result: VReg, input: VReg, shift: UInt16, position: MetaProgramCounter, end: MetaProgramCounter)?
         /// The highest offset any label has been pinned at.
         ///
         /// Rewinding the instruction buffer past a pinned label would silently
@@ -2235,6 +2236,7 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             lastAccAndSlot = nil
             copyAfterAcc = nil
             lastCopy = nil
+            xorShift = nil
         }
 
         /// Records a single copy just emitted at `position`.
@@ -5486,6 +5488,7 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         // Captured before `popOperand`, which resets the last emission.
         let candidate = iseqBuilder.binaryEmission
         let accCandidate = iseqBuilder.accProducer
+        let xorShift = iseqBuilder.xorShift
         // Popped as sources, so that a constant operand gets a pool slot only
         // when no immediate form takes it.
         let rhsSource = try popOperand(type)
@@ -5497,7 +5500,44 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         let lhsProduced = lhsSource.stackRegister
         let rhsProduced = rhsSource.stackRegister
 
+        if type == .i64, op == .mul, let xorShift,
+            xorShift.end.offsetFromHead == iseqBuilder.insertingPC.offsetFromHead,
+            iseqBuilder.canRewind(to: xorShift.position) {
+            let other: ValueSource? = xorShift.result == lhsProduced && xorShift.result != rhsProduced ? rhsSource
+                : (xorShift.result == rhsProduced && xorShift.result != lhsProduced ? lhsSource : nil)
+            if let other {
+                let multiplier = ensureOnVReg(other)
+                iseqBuilder.rewind(to: xorShift.position)
+                self.rewindInstructionMapping(to: xorShift.position)
+                emit(.i64XorShiftMulImm(.init(result: result, input: xorShift.input, multiplier: multiplier, shift: xorShift.shift)),
+                    resultRelink: { newResult in
+                        .i64XorShiftMulImm(.init(result: newResult, input: xorShift.input, multiplier: multiplier, shift: xorShift.shift))
+                    })
+                return
+            }
+        }
+
         if let candidate, candidate.operation.type == type, iseqBuilder.canRewind(to: candidate) {
+            if type == .i64, op == .xor, candidate.operation.op == .shrU,
+                let constant = candidate.operation.rhsConstant {
+                let produced = candidate.operation
+                let other: ValueSource? = produced.result == lhsProduced && produced.result != rhsProduced ? rhsSource
+                    : (produced.result == rhsProduced && produced.result != lhsProduced ? lhsSource : nil)
+                if let other, existingSlot(of: other) == produced.lhs {
+                    let shift = UInt16(constant.storage & 63)
+                    iseqBuilder.rewind(to: candidate.position)
+                    self.rewindInstructionMapping(to: candidate.position)
+                    if let prefix = candidate.prefix { emit(prefix.plain) }
+                    let position = iseqBuilder.insertingPC
+                    emit(.i64XorShiftImm(.init(result: result, input: produced.lhs, shift: UInt32(shift))),
+                        resultRelink: { newResult in
+                            .i64XorShiftImm(.init(result: newResult, input: produced.lhs, shift: UInt32(shift)))
+                        })
+                    iseqBuilder.xorShift = (result, produced.lhs, shift, position, iseqBuilder.insertingPC)
+                    return
+                }
+            }
+
             let produced = candidate.operation
             // `z` must not be the intermediate itself: its slot is no longer
             // written once the producer is rewound away.

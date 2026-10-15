@@ -2416,6 +2416,10 @@ enum Instruction {
     /// A shared memory's bounds check relies on faults in its guard pages. Kept apart
     /// from `selectMemory` so that the common handler makes no call and stays a leaf.
     case selectSharedMemory(Instruction.SelectSharedMemoryOperand)
+    /// result = x ^ (x >> shift)
+    case i64XorShiftImm(Instruction.I64XorShiftImmOperand)
+    /// result = (x ^ (x >> shift)) * multiplier, wrapping
+    case i64XorShiftMulImm(Instruction.I64XorShiftMulImmOperand)
 }
 
 extension Instruction {
@@ -3684,6 +3688,50 @@ extension Instruction {
             emitSlot { unsafeBitCast(($0.memory, 0, 0, 0, 0) as (UInt32, UInt8, UInt8, UInt8, UInt8), to: CodeSlot.self) }
         }
     }
+
+    struct I64XorShiftImmOperand: InstructionImmediate {
+        var result: VReg
+        var input: VReg
+        var shift: UInt32
+        @inline(__always) static func load(from pc: inout Pc) -> Self {
+            #if _endian(little)
+                let word0 = pc.read(UInt64.self)
+                let result = VReg(byteOffset: Int16(truncatingIfNeeded: word0))
+                let input = VReg(byteOffset: Int16(truncatingIfNeeded: word0 >> 16))
+                let shift = UInt32(truncatingIfNeeded: word0 >> 32)
+                return Self(result: result, input: input, shift: shift)
+            #else
+                let (result, input, shift) = pc.read((VReg, VReg, UInt32).self)
+                return Self(result: result, input: input, shift: shift)
+            #endif
+        }
+        @inline(__always) static func emit(to emitSlot: ((Self) -> CodeSlot) -> Void) {
+            emitSlot { unsafeBitCast(($0.result, $0.input, $0.shift) as (VReg, VReg, UInt32), to: CodeSlot.self) }
+        }
+    }
+
+    struct I64XorShiftMulImmOperand: InstructionImmediate {
+        var result: VReg
+        var input: VReg
+        var multiplier: VReg
+        var shift: UInt16
+        @inline(__always) static func load(from pc: inout Pc) -> Self {
+            #if _endian(little)
+                let word0 = pc.read(UInt64.self)
+                let result = VReg(byteOffset: Int16(truncatingIfNeeded: word0))
+                let input = VReg(byteOffset: Int16(truncatingIfNeeded: word0 >> 16))
+                let multiplier = VReg(byteOffset: Int16(truncatingIfNeeded: word0 >> 32))
+                let shift = UInt16(truncatingIfNeeded: word0 >> 48)
+                return Self(result: result, input: input, multiplier: multiplier, shift: shift)
+            #else
+                let (result, input, multiplier, shift) = pc.read((VReg, VReg, VReg, UInt16).self)
+                return Self(result: result, input: input, multiplier: multiplier, shift: shift)
+            #endif
+        }
+        @inline(__always) static func emit(to emitSlot: ((Self) -> CodeSlot) -> Void) {
+            emitSlot { unsafeBitCast(($0.result, $0.input, $0.multiplier, $0.shift) as (VReg, VReg, VReg, UInt16), to: CodeSlot.self) }
+        }
+    }
 }
 
 extension Instruction {
@@ -4415,6 +4463,8 @@ extension Instruction {
         case .brIfNotNull(let immediate): return immediate
         case .selectMemory(let immediate): return immediate
         case .selectSharedMemory(let immediate): return immediate
+        case .i64XorShiftImm(let immediate): return immediate
+        case .i64XorShiftMulImm(let immediate): return immediate
         default: return nil
         }
     }
@@ -5150,6 +5200,8 @@ extension Instruction {
         case .brIfNotNull(let immediate): immediate.emit(to: emit)
         case .selectMemory(let immediate): immediate.emit(to: emit)
         case .selectSharedMemory(let immediate): immediate.emit(to: emit)
+        case .i64XorShiftImm(let immediate): immediate.emit(to: emit)
+        case .i64XorShiftMulImm(let immediate): immediate.emit(to: emit)
         default: return
         }
     }
@@ -5897,13 +5949,15 @@ extension Instruction {
         case .brIfNull: return 734
         case .brIfNotNull: return 735
         case .selectMemory: return 736
-        default: return 737  // .selectSharedMemory
+        case .selectSharedMemory: return 737
+        case .i64XorShiftImm: return 738
+        default: return 739  // .i64XorShiftMulImm
         }
     }
 }
 extension Instruction {
     /// The number of opcodes, trap pseudo-instructions included.
-    static let opcodeCount = 738
+    static let opcodeCount = 740
 
     /// Whether only the direct-threaded dispatcher implements this instruction;
     /// `Execution.doExecute` has no case for it.
@@ -6664,6 +6718,8 @@ extension Instruction {
         case 735: return .brIfNotNull(Instruction.BrIfOperand.load(from: &pc))
         case 736: return .selectMemory(Instruction.SelectMemoryOperand.load(from: &pc))
         case 737: return .selectSharedMemory(Instruction.SelectSharedMemoryOperand.load(from: &pc))
+        case 738: return .i64XorShiftImm(Instruction.I64XorShiftImmOperand.load(from: &pc))
+        case 739: return .i64XorShiftMulImm(Instruction.I64XorShiftMulImmOperand.load(from: &pc))
         default: fatalError("Unknown instruction opcode: \(opcode)")
         }
     }
@@ -7416,6 +7472,8 @@ extension Instruction {
         case 735: return "brIfNotNull"
         case 736: return "selectMemory"
         case 737: return "selectSharedMemory"
+        case 738: return "i64XorShiftImm"
+        case 739: return "i64XorShiftMulImm"
         default: fatalError("Unknown instruction index: \(opcode)")
         }
     }

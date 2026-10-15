@@ -450,6 +450,8 @@ extension Execution {
         case 735: return self.execute_brIfNotNull(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 736: return self.execute_selectMemory(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 737: return self.execute_selectSharedMemory(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 738: return self.execute_i64XorShiftImm(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 739: return self.execute_i64XorShiftMulImm(sp: &sp, pc: &pc, md: &md, ms: &ms)
         default: preconditionFailure("Unknown instruction!?")
 
         }
@@ -7227,6 +7229,25 @@ extension Execution {
         let next = pc.pointee.pointee
         pc.pointee = pc.pointee.advanced(by: 1)
         self.selectSharedMemory(sp: sp.pointee, md: &md.pointee, ms: &ms.pointee, immediate: immediate)
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64XorShiftImm") @inline(__always)
+    mutating func execute_i64XorShiftImm(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.I64XorShiftImmOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let input = sp.pointee[i64: immediate.input]
+sp.pointee[i64: immediate.result] = input ^ (input &>> UInt64(immediate.shift))
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64XorShiftMulImm") @inline(__always)
+    mutating func execute_i64XorShiftMulImm(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.I64XorShiftMulImmOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let input = sp.pointee[i64: immediate.input]
+let mixed = input ^ (input &>> UInt64(immediate.shift))
+sp.pointee[i64: immediate.result] = mixed &* sp.pointee[i64: immediate.multiplier]
         return next
     }
 }
