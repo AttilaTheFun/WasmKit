@@ -5,7 +5,7 @@ import WAT
 @Suite struct InternalCallFrameTests {
     @Test(arguments: [EngineConfiguration.ThreadingModel.direct, .token])
     func frameSizesAndRepeatedCalls(threadingModel: EngineConfiguration.ThreadingModel) throws {
-        for count in [0, 1, 2, 4, 8, 15, 16, 17, 32, 100] {
+        for count in [0, 1, 2, 3, 4, 5, 7, 8, 9, 15, 16, 17, 32, 100] {
             let locals = count == 0 ? "" : "(local " + Array(repeating: "i64", count: count).joined(separator: " ") + ")"
             let check = count == 0 ? "i64.const 0" : "local.get \(count)"
             let module = try parseWasm(bytes: wat2wasm("""

@@ -195,6 +195,37 @@ struct Execution: ~Copyable {
         return true
     }
 
+    /// The size class is selected once by compilingCall; inlining removes the
+    /// switch from each specialized handler. The compiled frame image is fixed.
+    @inline(__always)
+    func pushSpecializedFrame(iseq: InstructionSequence, function: EntityHandle<WasmFunctionEntity>,
+                              sp: Sp, newSp: Sp, returnPC: Pc, sizeClass: Int) -> Bool {
+        guard _fastPath(newSp.advanced(by: iseq.maxStackHeight) < stackEnd) else { return false }
+        let savedSlots = -StackLayout.numberOfSavingSlots * MemoryLayout<UntypedValue>.stride
+        let offset = iseq.frameInitOffset
+        let src = iseq.frameInitAnchor
+        let dst = UnsafeMutableRawPointer(newSp)
+        switch sizeClass {
+        case 0: break
+        case 8: dst.storeBytes(of: src.load(fromByteOffset: savedSlots - 8, as: UInt64.self), toByteOffset: savedSlots - 8, as: UInt64.self)
+        case 16: Self.copy16(dst, src, savedSlots - 16)
+        case 32:
+            Self.copy16(dst, src, offset)
+            Self.copy16(dst, src, savedSlots - 16)
+        case 64:
+            Self.copy32(dst, src, offset)
+            Self.copy32(dst, src, savedSlots - 32)
+        case 128:
+            Self.copy64(dst, src, offset)
+            Self.copy64(dst, src, savedSlots - 64)
+        default: preconditionFailure("Invalid call frame size class")
+        }
+        newSp.previousSP = sp
+        newSp.setReturnPC(returnPC, needsMemoryRestore: false)
+        newSp.currentFunction = function
+        return true
+    }
+
     /// Pushes a new call frame to the VM stack.
     ///
     /// - Parameter needsMemoryRestoreOnReturn: whether returning from this frame

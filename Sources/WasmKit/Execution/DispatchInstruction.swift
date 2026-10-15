@@ -457,6 +457,12 @@ extension Execution {
         case 742: return self.execute_i32GlobalSubSet(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 743: return try self.executeToken_i32AddImmLoad(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 744: return try self.executeToken_i32LoadMemory32(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 745: return self.execute_internalCallFrame0(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 746: return self.execute_internalCallFrame8(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 747: return self.execute_internalCallFrame16(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 748: return self.execute_internalCallFrame32(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 749: return self.execute_internalCallFrame64(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 750: return self.execute_internalCallFrame128(sp: &sp, pc: &pc, md: &md, ms: &ms)
         default: preconditionFailure("Unknown instruction!?")
 
         }
@@ -7309,6 +7315,48 @@ sp.pointee[i64: immediate.result] = mixed &* sp.pointee[i64: immediate.multiplie
         let next = pc.pointee.pointee
         pc.pointee = pc.pointee.advanced(by: 1)
         if let trap = self.memoryLoad32(sp: sp.pointee, md: md.pointee, ms: ms.pointee, immediate: immediate) { return trap.directThreadedHeadSlot }
+        return next
+    }
+    @_silgen_name("wasmkit_execute_internalCallFrame0") @inline(__always)
+    mutating func execute_internalCallFrame0(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.CallOperand.load(from: &pc.pointee)
+        let next: CodeSlot
+        (pc.pointee, next) = self.internalCallFrame0(sp: &sp.pointee, pc: pc.pointee, immediate: immediate)
+        return next
+    }
+    @_silgen_name("wasmkit_execute_internalCallFrame8") @inline(__always)
+    mutating func execute_internalCallFrame8(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.CallOperand.load(from: &pc.pointee)
+        let next: CodeSlot
+        (pc.pointee, next) = self.internalCallFrame8(sp: &sp.pointee, pc: pc.pointee, immediate: immediate)
+        return next
+    }
+    @_silgen_name("wasmkit_execute_internalCallFrame16") @inline(__always)
+    mutating func execute_internalCallFrame16(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.CallOperand.load(from: &pc.pointee)
+        let next: CodeSlot
+        (pc.pointee, next) = self.internalCallFrame16(sp: &sp.pointee, pc: pc.pointee, immediate: immediate)
+        return next
+    }
+    @_silgen_name("wasmkit_execute_internalCallFrame32") @inline(__always)
+    mutating func execute_internalCallFrame32(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.CallOperand.load(from: &pc.pointee)
+        let next: CodeSlot
+        (pc.pointee, next) = self.internalCallFrame32(sp: &sp.pointee, pc: pc.pointee, immediate: immediate)
+        return next
+    }
+    @_silgen_name("wasmkit_execute_internalCallFrame64") @inline(__always)
+    mutating func execute_internalCallFrame64(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.CallOperand.load(from: &pc.pointee)
+        let next: CodeSlot
+        (pc.pointee, next) = self.internalCallFrame64(sp: &sp.pointee, pc: pc.pointee, immediate: immediate)
+        return next
+    }
+    @_silgen_name("wasmkit_execute_internalCallFrame128") @inline(__always)
+    mutating func execute_internalCallFrame128(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.CallOperand.load(from: &pc.pointee)
+        let next: CodeSlot
+        (pc.pointee, next) = self.internalCallFrame128(sp: &sp.pointee, pc: pc.pointee, immediate: immediate)
         return next
     }
 }

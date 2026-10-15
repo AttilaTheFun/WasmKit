@@ -1924,6 +1924,9 @@ extension VMGen {
         var load32 = Instruction(name: "i32LoadMemory32", documentation: "Load i32 with a 32-bit address and static offset", useCurrentMemory: .read, immediateLayout: .accMemoryPointerResult)
         load32.mayDispatchToTrap = true
         instructions.append(load32)
+        for size in [0, 8, 16, 32, 64, 128] {
+            instructions.append(Instruction(name: "internalCallFrame\(size)", documentation: "Internal call with a preselected frame initialization size class", isControl: true, mayUpdateFrame: true, immediateLayout: .call))
+        }
         return instructions
     }
 

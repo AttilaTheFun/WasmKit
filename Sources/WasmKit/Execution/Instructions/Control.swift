@@ -140,6 +140,72 @@ extension Execution {
     }
 
     @inline(__always)
+    mutating func internalCallFrame0(sp: inout Sp, pc: Pc, immediate: Instruction.CallOperand) -> (Pc, CodeSlot) {
+        let (iseq, function) = immediate.callee.assumeCompiled()
+        let newSp = sp.advanced(by: immediate.spAddend)
+        guard pushSpecializedFrame(iseq: iseq, function: function, sp: sp, newSp: newSp, returnPC: pc, sizeClass: 0) else {
+            return (pc.advanced(by: -2), store.value.engine.internalCallSlowSlot)
+        }
+        sp = newSp
+        return iseq.baseAddress.next()
+    }
+
+    @inline(__always)
+    mutating func internalCallFrame8(sp: inout Sp, pc: Pc, immediate: Instruction.CallOperand) -> (Pc, CodeSlot) {
+        let (iseq, function) = immediate.callee.assumeCompiled()
+        let newSp = sp.advanced(by: immediate.spAddend)
+        guard pushSpecializedFrame(iseq: iseq, function: function, sp: sp, newSp: newSp, returnPC: pc, sizeClass: 8) else {
+            return (pc.advanced(by: -2), store.value.engine.internalCallSlowSlot)
+        }
+        sp = newSp
+        return iseq.baseAddress.next()
+    }
+
+    @inline(__always)
+    mutating func internalCallFrame16(sp: inout Sp, pc: Pc, immediate: Instruction.CallOperand) -> (Pc, CodeSlot) {
+        let (iseq, function) = immediate.callee.assumeCompiled()
+        let newSp = sp.advanced(by: immediate.spAddend)
+        guard pushSpecializedFrame(iseq: iseq, function: function, sp: sp, newSp: newSp, returnPC: pc, sizeClass: 16) else {
+            return (pc.advanced(by: -2), store.value.engine.internalCallSlowSlot)
+        }
+        sp = newSp
+        return iseq.baseAddress.next()
+    }
+
+    @inline(__always)
+    mutating func internalCallFrame32(sp: inout Sp, pc: Pc, immediate: Instruction.CallOperand) -> (Pc, CodeSlot) {
+        let (iseq, function) = immediate.callee.assumeCompiled()
+        let newSp = sp.advanced(by: immediate.spAddend)
+        guard pushSpecializedFrame(iseq: iseq, function: function, sp: sp, newSp: newSp, returnPC: pc, sizeClass: 32) else {
+            return (pc.advanced(by: -2), store.value.engine.internalCallSlowSlot)
+        }
+        sp = newSp
+        return iseq.baseAddress.next()
+    }
+
+    @inline(__always)
+    mutating func internalCallFrame64(sp: inout Sp, pc: Pc, immediate: Instruction.CallOperand) -> (Pc, CodeSlot) {
+        let (iseq, function) = immediate.callee.assumeCompiled()
+        let newSp = sp.advanced(by: immediate.spAddend)
+        guard pushSpecializedFrame(iseq: iseq, function: function, sp: sp, newSp: newSp, returnPC: pc, sizeClass: 64) else {
+            return (pc.advanced(by: -2), store.value.engine.internalCallSlowSlot)
+        }
+        sp = newSp
+        return iseq.baseAddress.next()
+    }
+
+    @inline(__always)
+    mutating func internalCallFrame128(sp: inout Sp, pc: Pc, immediate: Instruction.CallOperand) -> (Pc, CodeSlot) {
+        let (iseq, function) = immediate.callee.assumeCompiled()
+        let newSp = sp.advanced(by: immediate.spAddend)
+        guard pushSpecializedFrame(iseq: iseq, function: function, sp: sp, newSp: newSp, returnPC: pc, sizeClass: 128) else {
+            return (pc.advanced(by: -2), store.value.engine.internalCallSlowSlot)
+        }
+        sp = newSp
+        return iseq.baseAddress.next()
+    }
+
+    @inline(__always)
     mutating func internalCallSlow(sp: inout Sp, pc: Pc, immediate: Instruction.CallOperand) throws -> (Pc, CodeSlot) {
         var pc = pc
         let callee = immediate.callee
@@ -153,8 +219,22 @@ extension Execution {
         // NOTE: `CompilingCallOperand` consumes 2 slots, discriminator is at -3
         let headSlotPc = pc.advanced(by: -3)
         let callee = immediate.callee
-        try callee.wasm.ensureCompiled(store: store)
-        let replaced = Instruction.internalCall(immediate)
+        let iseq = try callee.wasm.ensureCompiled(store: store)
+        let replaced: Instruction
+        if callee.wasm.instance.isDebuggable {
+            replaced = .internalCall(immediate)
+        } else {
+            let bytes = -StackLayout.numberOfSavingSlots * MemoryLayout<UntypedValue>.stride - iseq.frameInitOffset
+            switch bytes {
+            case 0: replaced = .internalCallFrame0(immediate)
+            case 8: replaced = .internalCallFrame8(immediate)
+            case 16: replaced = .internalCallFrame16(immediate)
+            case 17...32: replaced = .internalCallFrame32(immediate)
+            case 33...64: replaced = .internalCallFrame64(immediate)
+            case 65...128: replaced = .internalCallFrame128(immediate)
+            default: replaced = .internalCallSlow(immediate)
+            }
+        }
         headSlotPc.pointee = replaced.headSlotInline(
             threadingModel: store.value.engine.configuration.threadingModel)
         try _internalCall(sp: &sp, pc: &pc, callee: callee, internalCallOperand: immediate)

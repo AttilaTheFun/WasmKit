@@ -2430,6 +2430,18 @@ enum Instruction {
     case i32AddImmLoad(Instruction.I32AddImmLoadOperand)
     /// Load i32 with a 32-bit address and static offset
     case i32LoadMemory32(Instruction.AccMemoryPointerResultOperand)
+    /// Internal call with a preselected frame initialization size class
+    case internalCallFrame0(Instruction.CallOperand)
+    /// Internal call with a preselected frame initialization size class
+    case internalCallFrame8(Instruction.CallOperand)
+    /// Internal call with a preselected frame initialization size class
+    case internalCallFrame16(Instruction.CallOperand)
+    /// Internal call with a preselected frame initialization size class
+    case internalCallFrame32(Instruction.CallOperand)
+    /// Internal call with a preselected frame initialization size class
+    case internalCallFrame64(Instruction.CallOperand)
+    /// Internal call with a preselected frame initialization size class
+    case internalCallFrame128(Instruction.CallOperand)
 }
 
 extension Instruction {
@@ -4545,6 +4557,12 @@ extension Instruction {
         case .i32GlobalSubSet(let immediate): return immediate
         case .i32AddImmLoad(let immediate): return immediate
         case .i32LoadMemory32(let immediate): return immediate
+        case .internalCallFrame0(let immediate): return immediate
+        case .internalCallFrame8(let immediate): return immediate
+        case .internalCallFrame16(let immediate): return immediate
+        case .internalCallFrame32(let immediate): return immediate
+        case .internalCallFrame64(let immediate): return immediate
+        case .internalCallFrame128(let immediate): return immediate
         default: return nil
         }
     }
@@ -5287,6 +5305,12 @@ extension Instruction {
         case .i32GlobalSubSet(let immediate): immediate.emit(to: emit)
         case .i32AddImmLoad(let immediate): immediate.emit(to: emit)
         case .i32LoadMemory32(let immediate): immediate.emit(to: emit)
+        case .internalCallFrame0(let immediate): immediate.emit(to: emit)
+        case .internalCallFrame8(let immediate): immediate.emit(to: emit)
+        case .internalCallFrame16(let immediate): immediate.emit(to: emit)
+        case .internalCallFrame32(let immediate): immediate.emit(to: emit)
+        case .internalCallFrame64(let immediate): immediate.emit(to: emit)
+        case .internalCallFrame128(let immediate): immediate.emit(to: emit)
         default: return
         }
     }
@@ -6041,13 +6065,19 @@ extension Instruction {
         case .i32GlobalAddSet: return 741
         case .i32GlobalSubSet: return 742
         case .i32AddImmLoad: return 743
-        default: return 744  // .i32LoadMemory32
+        case .i32LoadMemory32: return 744
+        case .internalCallFrame0: return 745
+        case .internalCallFrame8: return 746
+        case .internalCallFrame16: return 747
+        case .internalCallFrame32: return 748
+        case .internalCallFrame64: return 749
+        default: return 750  // .internalCallFrame128
         }
     }
 }
 extension Instruction {
     /// The number of opcodes, trap pseudo-instructions included.
-    static let opcodeCount = 745
+    static let opcodeCount = 751
 
     /// Whether only the direct-threaded dispatcher implements this instruction;
     /// `Execution.doExecute` has no case for it.
@@ -6815,6 +6845,12 @@ extension Instruction {
         case 742: return .i32GlobalSubSet(Instruction.I32GlobalAddSetOperand.load(from: &pc))
         case 743: return .i32AddImmLoad(Instruction.I32AddImmLoadOperand.load(from: &pc))
         case 744: return .i32LoadMemory32(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 745: return .internalCallFrame0(Instruction.CallOperand.load(from: &pc))
+        case 746: return .internalCallFrame8(Instruction.CallOperand.load(from: &pc))
+        case 747: return .internalCallFrame16(Instruction.CallOperand.load(from: &pc))
+        case 748: return .internalCallFrame32(Instruction.CallOperand.load(from: &pc))
+        case 749: return .internalCallFrame64(Instruction.CallOperand.load(from: &pc))
+        case 750: return .internalCallFrame128(Instruction.CallOperand.load(from: &pc))
         default: fatalError("Unknown instruction opcode: \(opcode)")
         }
     }
@@ -7574,6 +7610,12 @@ extension Instruction {
         case 742: return "i32GlobalSubSet"
         case 743: return "i32AddImmLoad"
         case 744: return "i32LoadMemory32"
+        case 745: return "internalCallFrame0"
+        case 746: return "internalCallFrame8"
+        case 747: return "internalCallFrame16"
+        case 748: return "internalCallFrame32"
+        case 749: return "internalCallFrame64"
+        case 750: return "internalCallFrame128"
         default: fatalError("Unknown instruction index: \(opcode)")
         }
     }
