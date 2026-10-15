@@ -1231,6 +1231,7 @@ extension VMGen {
         results += i64Pairs.map { IntBinBinOpInfo(type: "i64", op1: $0.0, op2: $0.1) }
         // `z - x * y` cannot be reached by swapping operands.
         results.append(IntBinBinOpInfo(type: "i32", op1: "Mul", op2: "Sub", reversed: true))
+        results.append(IntBinBinOpInfo(type: "i64", op1: "ShrU", op2: "Xor"))
         return results
     }()
 
@@ -1889,6 +1890,14 @@ extension VMGen {
                 $0.field(name: "memory", type: .MemoryIndex)
             },
         ]
+        instructions.append(Instruction(name: "i64ShrUXorMul",
+            documentation: "result = ((x >> (y & 63)) ^ z) * w, wrapping") {
+            $0.field(name: "result", type: .VReg)
+            $0.field(name: "x", type: .VReg)
+            $0.field(name: "y", type: .VReg)
+            $0.field(name: "z", type: .VReg)
+            $0.field(name: "w", type: .VReg)
+        })
         return instructions
     }
 

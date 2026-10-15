@@ -1280,6 +1280,7 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         case (.i32, .sub, .add, false): return Instruction.i32SubAdd
         case (.i32, .and, .shl, false): return Instruction.i32AndShl
         case (.i32, .mul, .sub, true): return Instruction.i32MulSubRev
+        case (.i64, .shrU, .xor, false): return Instruction.i64ShrUXor
         case (.i64, .xor, .rotl, false): return Instruction.i64XorRotl
         case (.i64, .mul, .add, false): return Instruction.i64MulAdd
         case (.i64, .shl, .and, false): return Instruction.i64ShlAnd
@@ -2035,6 +2036,7 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         private var copyAfterAcc: (producer: AccProducer, source: VReg, dest: VReg, end: MetaProgramCounter)?
         /// The last emitted single copy, for pairing it with the next one.
         private var lastCopy: (source: VReg, dest: VReg, position: MetaProgramCounter, end: MetaProgramCounter)?
+        fileprivate var shiftXorEmission: (operand: Instruction.BinBinOperand, position: MetaProgramCounter, end: MetaProgramCounter)?
         /// The highest offset any label has been pinned at.
         ///
         /// Rewinding the instruction buffer past a pinned label would silently
@@ -2235,6 +2237,7 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             lastAccAndSlot = nil
             copyAfterAcc = nil
             lastCopy = nil
+            shiftXorEmission = nil
         }
 
         /// Records a single copy just emitted at `position`.
@@ -5486,6 +5489,7 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         // Captured before `popOperand`, which resets the last emission.
         let candidate = iseqBuilder.binaryEmission
         let accCandidate = iseqBuilder.accProducer
+        let shiftXor = iseqBuilder.shiftXorEmission
         // Popped as sources, so that a constant operand gets a pool slot only
         // when no immediate form takes it.
         let rhsSource = try popOperand(type)
@@ -5496,6 +5500,24 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         // always a stack temporary.
         let lhsProduced = lhsSource.stackRegister
         let rhsProduced = rhsSource.stackRegister
+
+        if type == .i64, op == .mul, let shiftXor,
+            shiftXor.end.offsetFromHead == iseqBuilder.insertingPC.offsetFromHead,
+            iseqBuilder.canRewind(to: shiftXor.position) {
+            let prior = shiftXor.operand
+            let other: ValueSource? = prior.result == lhsProduced && prior.result != rhsProduced ? rhsSource
+                : (prior.result == rhsProduced && prior.result != lhsProduced ? lhsSource : nil)
+            if let other {
+                let multiplier = ensureOnVReg(other)
+                iseqBuilder.rewind(to: shiftXor.position)
+                self.rewindInstructionMapping(to: shiftXor.position)
+                emit(.i64ShrUXorMul(.init(result: result, x: prior.x, y: prior.y, z: prior.z, w: multiplier)),
+                    resultRelink: { newResult in
+                        .i64ShrUXorMul(.init(result: newResult, x: prior.x, y: prior.y, z: prior.z, w: multiplier))
+                    })
+                return
+            }
+        }
 
         if let candidate, candidate.operation.type == type, iseqBuilder.canRewind(to: candidate) {
             let produced = candidate.operation
@@ -5529,12 +5551,16 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
                 if let prefix = candidate.prefix {
                     emit(prefix.plain)
                 }
+                let fusionPosition = iseqBuilder.insertingPC
                 emit(
                     make(Instruction.BinBinOperand(result: result, x: x, y: y, z: z)),
                     resultRelink: { newResult in
                         make(Instruction.BinBinOperand(result: newResult, x: x, y: y, z: z))
                     }
                 )
+                if type == .i64, produced.op == .shrU, op == .xor {
+                    iseqBuilder.shiftXorEmission = (.init(result: result, x: x, y: y, z: z), fusionPosition, iseqBuilder.insertingPC)
+                }
                 if type == .f64 {
                     iseqBuilder.recordAcc(
                         AccRecords(producer: .floatBinBin(op1: produced.op, op2: op, x: x, y: y, z: z, result: result)))

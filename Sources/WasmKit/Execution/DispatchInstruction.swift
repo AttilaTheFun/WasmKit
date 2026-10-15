@@ -420,36 +420,38 @@ extension Execution {
         case 363: return self.execute_i64XorMul(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 364: return self.execute_i64XorShrU(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 365: return self.execute_i32MulSubRev(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 713: return try self.executeToken_i32LoadWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 714: return try self.executeToken_i64LoadWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 366: return self.execute_i64ShrUXor(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 714: return try self.executeToken_i32LoadWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 715: return try self.executeToken_i64LoadWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
         // f32LoadWithCopy shares i32LoadWithCopy's handler body; see Instruction.handlerIdentity
-        case 715: return try self.executeToken_i32LoadWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 716: return try self.executeToken_i32LoadWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
         // f64LoadWithCopy shares i64LoadWithCopy's handler body; see Instruction.handlerIdentity
-        case 716: return try self.executeToken_i64LoadWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 717: return try self.executeToken_i32Load8SWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 718: return try self.executeToken_i32Load8UWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 719: return try self.executeToken_i32Load16SWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 720: return try self.executeToken_i32Load16UWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 721: return try self.executeToken_i64Load8SWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 717: return try self.executeToken_i64LoadWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 718: return try self.executeToken_i32Load8SWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 719: return try self.executeToken_i32Load8UWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 720: return try self.executeToken_i32Load16SWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 721: return try self.executeToken_i32Load16UWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 722: return try self.executeToken_i64Load8SWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
         // i64Load8UWithCopy shares i32Load8UWithCopy's handler body; see Instruction.handlerIdentity
-        case 722: return try self.executeToken_i32Load8UWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 723: return try self.executeToken_i64Load16SWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 723: return try self.executeToken_i32Load8UWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 724: return try self.executeToken_i64Load16SWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
         // i64Load16UWithCopy shares i32Load16UWithCopy's handler body; see Instruction.handlerIdentity
-        case 724: return try self.executeToken_i32Load16UWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 725: return try self.executeToken_i64Load32SWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 725: return try self.executeToken_i32Load16UWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 726: return try self.executeToken_i64Load32SWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
         // i64Load32UWithCopy shares i32LoadWithCopy's handler body; see Instruction.handlerIdentity
-        case 726: return try self.executeToken_i32LoadWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 727: return try self.executeToken_consumeFuel(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 728: return try self.execute_outOfFuelTrap(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 729: return try self.executeToken_checkEpoch(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 730: return try self.execute_epochDeadlineTrap(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 731: return try self.execute_callRef(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 732: return try self.execute_returnCallRef(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 733: return try self.execute_refAsNonNull(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 734: return self.execute_brIfNull(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 735: return self.execute_brIfNotNull(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 736: return self.execute_selectMemory(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 737: return self.execute_selectSharedMemory(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 727: return try self.executeToken_i32LoadWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 728: return try self.executeToken_consumeFuel(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 729: return try self.execute_outOfFuelTrap(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 730: return try self.executeToken_checkEpoch(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 731: return try self.execute_epochDeadlineTrap(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 732: return try self.execute_callRef(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 733: return try self.execute_returnCallRef(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 734: return try self.execute_refAsNonNull(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 735: return self.execute_brIfNull(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 736: return self.execute_brIfNotNull(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 737: return self.execute_selectMemory(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 738: return self.execute_selectSharedMemory(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 739: return self.execute_i64ShrUXorMul(sp: &sp, pc: &pc, md: &md, ms: &ms)
         default: preconditionFailure("Unknown instruction!?")
 
         }
@@ -4190,6 +4192,15 @@ extension Execution {
         sp.pointee[i32: immediate.result] = sp.pointee[i32: immediate.z].sub(intermediate)
         return next
     }
+    @_silgen_name("wasmkit_execute_i64ShrUXor") @inline(__always)
+    mutating func execute_i64ShrUXor(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.BinBinOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let intermediate = sp.pointee[i64: immediate.x].shrU(sp.pointee[i64: immediate.y])
+        sp.pointee[i64: immediate.result] = intermediate.xor(sp.pointee[i64: immediate.z])
+        return next
+    }
     @_silgen_name("wasmkit_execute_i32AddToAcc") @inline(__always)
     mutating func execute_i32AddToAcc(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
         let immediate = Instruction.AccBinaryOperand.load(from: &pc.pointee)
@@ -7229,6 +7240,16 @@ extension Execution {
         self.selectSharedMemory(sp: sp.pointee, md: &md.pointee, ms: &ms.pointee, immediate: immediate)
         return next
     }
+    @_silgen_name("wasmkit_execute_i64ShrUXorMul") @inline(__always)
+    mutating func execute_i64ShrUXorMul(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.I64ShrUXorMulOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let shifted = sp.pointee[i64: immediate.x].shrU(sp.pointee[i64: immediate.y])
+let mixed = shifted.xor(sp.pointee[i64: immediate.z])
+sp.pointee[i64: immediate.result] = mixed.mul(sp.pointee[i64: immediate.w])
+        return next
+    }
 }
 
 // The handler table exists only where Clang offers one of Swift's
@@ -7308,7 +7329,7 @@ extension Instruction {
             #if !(arch(i386) || arch(x86_64) || arch(arm) || arch(arm64) || arch(arm64_32))
             fatalError("Direct threading is not supported on this platform")
             #else
-            return CodeSlot(wasmkit_tc_exec_handlers.728)
+            return CodeSlot(wasmkit_tc_exec_handlers.729)
             #endif
         }
         /// The direct-threaded head slot of the `epochDeadlineTrap` pseudo-instruction.
@@ -7321,7 +7342,7 @@ extension Instruction {
             #if !(arch(i386) || arch(x86_64) || arch(arm) || arch(arm64) || arch(arm64_32))
             fatalError("Direct threading is not supported on this platform")
             #else
-            return CodeSlot(wasmkit_tc_exec_handlers.730)
+            return CodeSlot(wasmkit_tc_exec_handlers.731)
             #endif
         }
 }
