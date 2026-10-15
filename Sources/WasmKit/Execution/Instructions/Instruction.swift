@@ -2446,6 +2446,8 @@ enum Instruction {
     case i64XorShiftReturn(Instruction.I64XorShiftReturnOperand)
     /// Two dependent wrapping xor-shift-multiply operations, retaining both results
     case i64XorShiftMulPair(Instruction.I64XorShiftMulPairOperand)
+    /// Two ordered xor-shift-multiply operations followed by xor-shift and return
+    case i64XorShiftMulPairReturn(Instruction.I64XorShiftMulPairReturnOperand)
 }
 
 extension Instruction {
@@ -3911,6 +3913,30 @@ extension Instruction {
             emitSlot { unsafeBitCast(($0.multiplier1, $0.shift0, $0.shift1, 0, 0) as (VReg, UInt16, UInt16, UInt8, UInt8), to: CodeSlot.self) }
         }
     }
+
+    struct I64XorShiftMulPairReturnOperand: InstructionImmediate {
+        var result0: VReg
+        var result1: VReg
+        var result: VReg
+        var input: VReg
+        var multiplier0: VReg
+        var multiplier1: VReg
+        var shift0: UInt16
+        var shift1: UInt16
+        var shift2: UInt32
+        var dest: LVReg
+        @inline(__always) static func load(from pc: inout Pc) -> Self {
+            let (result0, result1, result, input) = pc.read((VReg, VReg, VReg, VReg).self)
+            let (multiplier0, multiplier1, shift0, shift1) = pc.read((VReg, VReg, UInt16, UInt16).self)
+            let (shift2, dest) = pc.read((UInt32, LVReg).self)
+            return Self(result0: result0, result1: result1, result: result, input: input, multiplier0: multiplier0, multiplier1: multiplier1, shift0: shift0, shift1: shift1, shift2: shift2, dest: dest)
+        }
+        @inline(__always) static func emit(to emitSlot: ((Self) -> CodeSlot) -> Void) {
+            emitSlot { unsafeBitCast(($0.result0, $0.result1, $0.result, $0.input) as (VReg, VReg, VReg, VReg), to: CodeSlot.self) }
+            emitSlot { unsafeBitCast(($0.multiplier0, $0.multiplier1, $0.shift0, $0.shift1) as (VReg, VReg, UInt16, UInt16), to: CodeSlot.self) }
+            emitSlot { unsafeBitCast(($0.shift2, $0.dest) as (UInt32, LVReg), to: CodeSlot.self) }
+        }
+    }
 }
 
 extension Instruction {
@@ -4657,6 +4683,7 @@ extension Instruction {
         case .internalCopy2Call(let immediate): return immediate
         case .i64XorShiftReturn(let immediate): return immediate
         case .i64XorShiftMulPair(let immediate): return immediate
+        case .i64XorShiftMulPairReturn(let immediate): return immediate
         default: return nil
         }
     }
@@ -5407,6 +5434,7 @@ extension Instruction {
         case .internalCopy2Call(let immediate): immediate.emit(to: emit)
         case .i64XorShiftReturn(let immediate): immediate.emit(to: emit)
         case .i64XorShiftMulPair(let immediate): immediate.emit(to: emit)
+        case .i64XorShiftMulPairReturn(let immediate): immediate.emit(to: emit)
         default: return
         }
     }
@@ -6169,13 +6197,14 @@ extension Instruction {
         case .compilingCopy2Call: return 749
         case .internalCopy2Call: return 750
         case .i64XorShiftReturn: return 751
-        default: return 752  // .i64XorShiftMulPair
+        case .i64XorShiftMulPair: return 752
+        default: return 753  // .i64XorShiftMulPairReturn
         }
     }
 }
 extension Instruction {
     /// The number of opcodes, trap pseudo-instructions included.
-    static let opcodeCount = 753
+    static let opcodeCount = 754
 
     /// Whether only the direct-threaded dispatcher implements this instruction;
     /// `Execution.doExecute` has no case for it.
@@ -6951,6 +6980,7 @@ extension Instruction {
         case 750: return .internalCopy2Call(Instruction.Copy2CallOperand.load(from: &pc))
         case 751: return .i64XorShiftReturn(Instruction.I64XorShiftReturnOperand.load(from: &pc))
         case 752: return .i64XorShiftMulPair(Instruction.I64XorShiftMulPairOperand.load(from: &pc))
+        case 753: return .i64XorShiftMulPairReturn(Instruction.I64XorShiftMulPairReturnOperand.load(from: &pc))
         default: fatalError("Unknown instruction opcode: \(opcode)")
         }
     }
@@ -7718,6 +7748,7 @@ extension Instruction {
         case 750: return "internalCopy2Call"
         case 751: return "i64XorShiftReturn"
         case 752: return "i64XorShiftMulPair"
+        case 753: return "i64XorShiftMulPairReturn"
         default: fatalError("Unknown instruction index: \(opcode)")
         }
     }
