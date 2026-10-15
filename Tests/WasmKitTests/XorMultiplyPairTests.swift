@@ -38,8 +38,10 @@ import WAT
             }
             #if Disassembler
             if shift == 17 && threadingModel == .direct {
+                let dumpStore = Store(engine: Engine(configuration: .init(threadingModel: threadingModel)))
+                let dumpInstance = try module.instantiate(store: dumpStore)
                 var listing = ""
-                try instance.dumpFunctions(to: &listing, module: module)
+                try dumpInstance.dumpFunctions(to: &listing, module: module)
                 #expect(listing.contains("i64XorShiftMulPair"))
             }
             #endif
