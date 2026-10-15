@@ -168,3 +168,29 @@ GDB Remote Protocol support (`GDBRemoteProtocol` and `WasmKitGDBHandler` modules
 See https://swift.org/LICENSE.txt for license information.
 
 See https://swift.org/CONTRIBUTORS.txt for Swift project authors.
+
+### iOS shared memory and WASI Threads
+
+On iOS 18 or later, 64-bit iOS hosts can use shared wasm32 memory and
+`WasmKitWASIThreads` with the `MultiThread` trait, direct threading, and
+mprotect bounds checking. Address Sanitizer or token threading disables this
+bounds-checking mode and therefore does not support shared memory.
+
+Each shared memory reserves the complete 4 GiB wasm32 address range plus the
+configured offset guard. Only committed guest pages become read/write; the
+reservation is not 4 GiB of resident RAM. A smaller declared maximum limits
+growth but does not shrink the reservation: generated memory accesses rely on
+the full guard range for safe bounds checking.
+
+Reservation can fail on iOS devices with constrained virtual address space.
+Hosts must handle allocation failure. Apple's
+[Extended Virtual Addressing entitlement](https://developer.apple.com/documentation/bundleresources/entitlements/com.apple.developer.kernel.extended-virtual-addressing)
+can provide more address space, but does not guarantee a successful reservation.
+Simulator success does not establish a physical device's address-space limit
+or entitlement needs. No executable mappings or JIT entitlement are required
+by this interpreter path.
+
+`WASIThreads` remains process-scoped: its worker-failure and main-return
+callbacks terminate the process, and workers are not a cancellable runtime
+lifecycle. Enabling iOS compilation does not add safe teardown or hot-reload
+semantics for long-lived app hosts.
