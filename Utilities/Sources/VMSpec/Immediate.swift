@@ -406,6 +406,32 @@ extension VMGen.ImmediateLayout {
         $0.field(name: "spAddend", type: .LVReg)
     }
 
+    static let copy3Call = Self(name: "Copy3CallOperand") {
+        $0.field(name: "prefixSource0", type: .VReg)
+        $0.field(name: "prefixDest0", type: .VReg)
+        $0.field(name: "prefixSource1", type: .VReg)
+        $0.field(name: "prefixDest1", type: .VReg)
+        $0.field(name: "source", type: .LVReg)
+        $0.field(name: "dest", type: .LVReg)
+        $0.field(name: "rawCallee", type: .UInt64)
+        $0.field(name: "arguments", type: .VReg)
+        $0.field(name: "spAddend", type: .LVReg)
+    }
+
+    static let copy4Call = Self(name: "Copy4CallOperand") {
+        $0.field(name: "prefixSource0", type: .VReg)
+        $0.field(name: "prefixDest0", type: .VReg)
+        $0.field(name: "prefixSource1", type: .VReg)
+        $0.field(name: "prefixDest1", type: .VReg)
+        $0.field(name: "source0", type: .VReg)
+        $0.field(name: "dest0", type: .VReg)
+        $0.field(name: "source1", type: .VReg)
+        $0.field(name: "dest1", type: .VReg)
+        $0.field(name: "rawCallee", type: .UInt64)
+        $0.field(name: "arguments", type: .VReg)
+        $0.field(name: "spAddend", type: .LVReg)
+    }
+
     static let v128Const = Self(name: "V128ConstOperand") {
         $0.field(name: "lo", type: .UInt64)
         $0.field(name: "hi", type: .UInt64)

@@ -463,6 +463,10 @@ extension Execution {
         case 748: return self.execute_internalCopyCall(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 749: return try self.execute_compilingCopy2Call(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 750: return self.execute_internalCopy2Call(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 751: return try self.execute_compilingCopy3Call(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 752: return self.execute_internalCopy3Call(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 753: return try self.execute_compilingCopy4Call(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 754: return self.execute_internalCopy4Call(sp: &sp, pc: &pc, md: &md, ms: &ms)
         default: preconditionFailure("Unknown instruction!?")
 
         }
@@ -7357,6 +7361,34 @@ sp.pointee[i64: immediate.result] = mixed &* sp.pointee[i64: immediate.multiplie
         let immediate = Instruction.Copy2CallOperand.load(from: &pc.pointee)
         let next: CodeSlot
         (pc.pointee, next) = self.internalCopy2Call(sp: &sp.pointee, pc: pc.pointee, immediate: immediate)
+        return next
+    }
+    @_silgen_name("wasmkit_execute_compilingCopy3Call") @inline(__always)
+    mutating func execute_compilingCopy3Call(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) throws -> CodeSlot {
+        let immediate = Instruction.Copy3CallOperand.load(from: &pc.pointee)
+        let next: CodeSlot
+        (pc.pointee, next) = try self.compilingCopy3Call(sp: &sp.pointee, pc: pc.pointee, immediate: immediate)
+        return next
+    }
+    @_silgen_name("wasmkit_execute_internalCopy3Call") @inline(__always)
+    mutating func execute_internalCopy3Call(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.Copy3CallOperand.load(from: &pc.pointee)
+        let next: CodeSlot
+        (pc.pointee, next) = self.internalCopy3Call(sp: &sp.pointee, pc: pc.pointee, immediate: immediate)
+        return next
+    }
+    @_silgen_name("wasmkit_execute_compilingCopy4Call") @inline(__always)
+    mutating func execute_compilingCopy4Call(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) throws -> CodeSlot {
+        let immediate = Instruction.Copy4CallOperand.load(from: &pc.pointee)
+        let next: CodeSlot
+        (pc.pointee, next) = try self.compilingCopy4Call(sp: &sp.pointee, pc: pc.pointee, immediate: immediate)
+        return next
+    }
+    @_silgen_name("wasmkit_execute_internalCopy4Call") @inline(__always)
+    mutating func execute_internalCopy4Call(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.Copy4CallOperand.load(from: &pc.pointee)
+        let next: CodeSlot
+        (pc.pointee, next) = self.internalCopy4Call(sp: &sp.pointee, pc: pc.pointee, immediate: immediate)
         return next
     }
 }

@@ -220,6 +220,66 @@ extension Execution {
         return internalCall(sp: &sp, pc: pc, immediate: call)
     }
 
+    @inline(__always)
+    mutating func compilingCopy3Call(sp: inout Sp, pc: Pc, immediate: Instruction.Copy3CallOperand) throws -> (Pc, CodeSlot) {
+        // Preserve the original pair's stores before reading subsequent copies.
+        let first = sp[immediate.prefixSource0]
+        let second = sp[immediate.prefixSource1]
+        sp[immediate.prefixDest0] = first
+        sp[immediate.prefixDest1] = second
+        sp[immediate.dest] = sp[immediate.source]
+        let call = Instruction.CallOperand(rawCallee: immediate.rawCallee, arguments: immediate.arguments, spAddend: immediate.spAddend)
+        try call.callee.wasm.ensureCompiled(store: store)
+        pc.advanced(by: -5).pointee = Instruction.internalCopy3Call(immediate).headSlotInline(
+            threadingModel: store.value.engine.configuration.threadingModel)
+        return try internalCallSlow(sp: &sp, pc: pc, immediate: call)
+    }
+
+    @inline(__always)
+    mutating func internalCopy3Call(sp: inout Sp, pc: Pc, immediate: Instruction.Copy3CallOperand) -> (Pc, CodeSlot) {
+        // Preserve the original pair's stores before reading subsequent copies.
+        let first = sp[immediate.prefixSource0]
+        let second = sp[immediate.prefixSource1]
+        sp[immediate.prefixDest0] = first
+        sp[immediate.prefixDest1] = second
+        sp[immediate.dest] = sp[immediate.source]
+        let call = Instruction.CallOperand(rawCallee: immediate.rawCallee, arguments: immediate.arguments, spAddend: immediate.spAddend)
+        return internalCall(sp: &sp, pc: pc, immediate: call)
+    }
+
+    @inline(__always)
+    mutating func compilingCopy4Call(sp: inout Sp, pc: Pc, immediate: Instruction.Copy4CallOperand) throws -> (Pc, CodeSlot) {
+        // Preserve the original pair's stores before reading subsequent copies.
+        let first = sp[immediate.prefixSource0]
+        let second = sp[immediate.prefixSource1]
+        sp[immediate.prefixDest0] = first
+        sp[immediate.prefixDest1] = second
+        let third = sp[immediate.source0]
+        let fourth = sp[immediate.source1]
+        sp[immediate.dest0] = third
+        sp[immediate.dest1] = fourth
+        let call = Instruction.CallOperand(rawCallee: immediate.rawCallee, arguments: immediate.arguments, spAddend: immediate.spAddend)
+        try call.callee.wasm.ensureCompiled(store: store)
+        pc.advanced(by: -5).pointee = Instruction.internalCopy4Call(immediate).headSlotInline(
+            threadingModel: store.value.engine.configuration.threadingModel)
+        return try internalCallSlow(sp: &sp, pc: pc, immediate: call)
+    }
+
+    @inline(__always)
+    mutating func internalCopy4Call(sp: inout Sp, pc: Pc, immediate: Instruction.Copy4CallOperand) -> (Pc, CodeSlot) {
+        // Preserve the original pair's stores before reading subsequent copies.
+        let first = sp[immediate.prefixSource0]
+        let second = sp[immediate.prefixSource1]
+        sp[immediate.prefixDest0] = first
+        sp[immediate.prefixDest1] = second
+        let third = sp[immediate.source0]
+        let fourth = sp[immediate.source1]
+        sp[immediate.dest0] = third
+        sp[immediate.dest1] = fourth
+        let call = Instruction.CallOperand(rawCallee: immediate.rawCallee, arguments: immediate.arguments, spAddend: immediate.spAddend)
+        return internalCall(sp: &sp, pc: pc, immediate: call)
+    }
+
     @inline(never)
     private func prepareForIndirectCall(
         sp: Sp, tableIndex: TableIndex, expectedType: InternedFuncType,

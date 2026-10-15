@@ -2442,6 +2442,14 @@ enum Instruction {
     case compilingCopy2Call(Instruction.Copy2CallOperand)
     /// Copy argument slots and call an internal function
     case internalCopy2Call(Instruction.Copy2CallOperand)
+    /// Copy a prefix pair and remaining arguments, then call
+    case compilingCopy3Call(Instruction.Copy3CallOperand)
+    /// Copy a prefix pair and remaining arguments, then call
+    case internalCopy3Call(Instruction.Copy3CallOperand)
+    /// Copy a prefix pair and remaining arguments, then call
+    case compilingCopy4Call(Instruction.Copy4CallOperand)
+    /// Copy a prefix pair and remaining arguments, then call
+    case internalCopy4Call(Instruction.Copy4CallOperand)
 }
 
 extension Instruction {
@@ -3859,6 +3867,58 @@ extension Instruction {
             emitSlot { unsafeBitCast(($0.arguments, $0.spAddend) as (VReg, LVReg), to: CodeSlot.self) }
         }
     }
+
+    struct Copy3CallOperand: InstructionImmediate {
+        var prefixSource0: VReg
+        var prefixDest0: VReg
+        var prefixSource1: VReg
+        var prefixDest1: VReg
+        var source: LVReg
+        var dest: LVReg
+        var rawCallee: UInt64
+        var arguments: VReg
+        var spAddend: LVReg
+        @inline(__always) static func load(from pc: inout Pc) -> Self {
+            let (prefixSource0, prefixDest0, prefixSource1, prefixDest1) = pc.read((VReg, VReg, VReg, VReg).self)
+            let (source, dest) = pc.read((LVReg, LVReg).self)
+            let (rawCallee) = pc.read((UInt64).self)
+            let (arguments, spAddend) = pc.read((VReg, LVReg).self)
+            return Self(prefixSource0: prefixSource0, prefixDest0: prefixDest0, prefixSource1: prefixSource1, prefixDest1: prefixDest1, source: source, dest: dest, rawCallee: rawCallee, arguments: arguments, spAddend: spAddend)
+        }
+        @inline(__always) static func emit(to emitSlot: ((Self) -> CodeSlot) -> Void) {
+            emitSlot { unsafeBitCast(($0.prefixSource0, $0.prefixDest0, $0.prefixSource1, $0.prefixDest1) as (VReg, VReg, VReg, VReg), to: CodeSlot.self) }
+            emitSlot { unsafeBitCast(($0.source, $0.dest) as (LVReg, LVReg), to: CodeSlot.self) }
+            emitSlot { $0.rawCallee }
+            emitSlot { unsafeBitCast(($0.arguments, $0.spAddend) as (VReg, LVReg), to: CodeSlot.self) }
+        }
+    }
+
+    struct Copy4CallOperand: InstructionImmediate {
+        var prefixSource0: VReg
+        var prefixDest0: VReg
+        var prefixSource1: VReg
+        var prefixDest1: VReg
+        var source0: VReg
+        var dest0: VReg
+        var source1: VReg
+        var dest1: VReg
+        var rawCallee: UInt64
+        var arguments: VReg
+        var spAddend: LVReg
+        @inline(__always) static func load(from pc: inout Pc) -> Self {
+            let (prefixSource0, prefixDest0, prefixSource1, prefixDest1) = pc.read((VReg, VReg, VReg, VReg).self)
+            let (source0, dest0, source1, dest1) = pc.read((VReg, VReg, VReg, VReg).self)
+            let (rawCallee) = pc.read((UInt64).self)
+            let (arguments, spAddend) = pc.read((VReg, LVReg).self)
+            return Self(prefixSource0: prefixSource0, prefixDest0: prefixDest0, prefixSource1: prefixSource1, prefixDest1: prefixDest1, source0: source0, dest0: dest0, source1: source1, dest1: dest1, rawCallee: rawCallee, arguments: arguments, spAddend: spAddend)
+        }
+        @inline(__always) static func emit(to emitSlot: ((Self) -> CodeSlot) -> Void) {
+            emitSlot { unsafeBitCast(($0.prefixSource0, $0.prefixDest0, $0.prefixSource1, $0.prefixDest1) as (VReg, VReg, VReg, VReg), to: CodeSlot.self) }
+            emitSlot { unsafeBitCast(($0.source0, $0.dest0, $0.source1, $0.dest1) as (VReg, VReg, VReg, VReg), to: CodeSlot.self) }
+            emitSlot { $0.rawCallee }
+            emitSlot { unsafeBitCast(($0.arguments, $0.spAddend) as (VReg, LVReg), to: CodeSlot.self) }
+        }
+    }
 }
 
 extension Instruction {
@@ -4603,6 +4663,10 @@ extension Instruction {
         case .internalCopyCall(let immediate): return immediate
         case .compilingCopy2Call(let immediate): return immediate
         case .internalCopy2Call(let immediate): return immediate
+        case .compilingCopy3Call(let immediate): return immediate
+        case .internalCopy3Call(let immediate): return immediate
+        case .compilingCopy4Call(let immediate): return immediate
+        case .internalCopy4Call(let immediate): return immediate
         default: return nil
         }
     }
@@ -5351,6 +5415,10 @@ extension Instruction {
         case .internalCopyCall(let immediate): immediate.emit(to: emit)
         case .compilingCopy2Call(let immediate): immediate.emit(to: emit)
         case .internalCopy2Call(let immediate): immediate.emit(to: emit)
+        case .compilingCopy3Call(let immediate): immediate.emit(to: emit)
+        case .internalCopy3Call(let immediate): immediate.emit(to: emit)
+        case .compilingCopy4Call(let immediate): immediate.emit(to: emit)
+        case .internalCopy4Call(let immediate): immediate.emit(to: emit)
         default: return
         }
     }
@@ -6111,13 +6179,17 @@ extension Instruction {
         case .compilingCopyCall: return 747
         case .internalCopyCall: return 748
         case .compilingCopy2Call: return 749
-        default: return 750  // .internalCopy2Call
+        case .internalCopy2Call: return 750
+        case .compilingCopy3Call: return 751
+        case .internalCopy3Call: return 752
+        case .compilingCopy4Call: return 753
+        default: return 754  // .internalCopy4Call
         }
     }
 }
 extension Instruction {
     /// The number of opcodes, trap pseudo-instructions included.
-    static let opcodeCount = 751
+    static let opcodeCount = 755
 
     /// Whether only the direct-threaded dispatcher implements this instruction;
     /// `Execution.doExecute` has no case for it.
@@ -6891,6 +6963,10 @@ extension Instruction {
         case 748: return .internalCopyCall(Instruction.CopyCallOperand.load(from: &pc))
         case 749: return .compilingCopy2Call(Instruction.Copy2CallOperand.load(from: &pc))
         case 750: return .internalCopy2Call(Instruction.Copy2CallOperand.load(from: &pc))
+        case 751: return .compilingCopy3Call(Instruction.Copy3CallOperand.load(from: &pc))
+        case 752: return .internalCopy3Call(Instruction.Copy3CallOperand.load(from: &pc))
+        case 753: return .compilingCopy4Call(Instruction.Copy4CallOperand.load(from: &pc))
+        case 754: return .internalCopy4Call(Instruction.Copy4CallOperand.load(from: &pc))
         default: fatalError("Unknown instruction opcode: \(opcode)")
         }
     }
@@ -7656,6 +7732,10 @@ extension Instruction {
         case 748: return "internalCopyCall"
         case 749: return "compilingCopy2Call"
         case 750: return "internalCopy2Call"
+        case 751: return "compilingCopy3Call"
+        case 752: return "internalCopy3Call"
+        case 753: return "compilingCopy4Call"
+        case 754: return "internalCopy4Call"
         default: fatalError("Unknown instruction index: \(opcode)")
         }
     }

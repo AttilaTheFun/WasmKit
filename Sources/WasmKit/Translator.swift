@@ -2051,6 +2051,22 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
                 canRewind(to: copy.position) else { return nil }
             return (copy.instruction, copy.position)
         }
+        fileprivate struct CallCopyPrefix {
+            let operand: Instruction.CopyStack2Operand
+            let position: MetaProgramCounter
+            let end: MetaProgramCounter
+        }
+        private var lastCallCopyPrefix: CallCopyPrefix?
+        fileprivate var callCopyPrefix: CallCopyPrefix? {
+            guard let prefix = lastCallCopyPrefix, let copy = lastReturnCopy,
+                copy.end.offsetFromHead == insertingPC.offsetFromHead,
+                prefix.end.offsetFromHead == copy.position.offsetFromHead,
+                canRewind(to: prefix.position) else { return nil }
+            return prefix
+        }
+        fileprivate mutating func restoreCallCopyPrefix(_ prefix: CallCopyPrefix) {
+            lastCallCopyPrefix = prefix
+        }
         private var lastCopy: (source: VReg, dest: VReg, position: MetaProgramCounter, end: MetaProgramCounter)?
         fileprivate var xorShift: (result: VReg, input: VReg, shift: UInt16, position: MetaProgramCounter, end: MetaProgramCounter)?
         /// The highest offset any label has been pinned at.
@@ -2255,6 +2271,7 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             copyAfterAcc = nil
             lastCopy = nil
             lastReturnCopy = nil
+            lastCallCopyPrefix = nil
             xorShift = nil
         }
 
@@ -2346,6 +2363,7 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         ) {
             relinkedGlobalUpdate = nil
             let position = insertingPC
+            let previousCopy = lastReturnCopy
             trace("emitInstruction: \(instruction)")
             emitSlot(headSlot(of: instruction))
             var slots: [CodeSlot] = []
@@ -2355,6 +2373,12 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             case .copyStack(let operand): lastReturnCopy = (.returnCopy(operand), position, insertingPC)
             case .copyStack2(let operand): lastReturnCopy = (.returnCopy2(operand), position, insertingPC)
             default: lastReturnCopy = nil
+            }
+            lastCallCopyPrefix = nil
+            if lastReturnCopy != nil, let previousCopy,
+                previousCopy.end.offsetFromHead == position.offsetFromHead,
+                case .returnCopy2(let operand) = previousCopy.instruction {
+                lastCallCopyPrefix = CallCopyPrefix(operand: operand, position: previousCopy.position, end: position)
             }
             self.lastEmission = LastEmission(
                 position: position, end: insertingPC,
@@ -2818,9 +2842,11 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
     private mutating func emitCopyStack(from source: VReg, to dest: VReg) -> Bool {
         guard source != dest else { return false }
         if iseqBuilder.emitsDirectOnlyInstructions, let previous = iseqBuilder.pairableCopy(reading: source) {
+            let prefix = iseqBuilder.callCopyPrefix
             iseqBuilder.rewind(to: previous.position)
             self.rewindInstructionMapping(to: previous.position)
             emit(.copyStack2(Instruction.CopyStack2Operand(source0: previous.source, dest0: previous.dest, source1: source, dest1: dest)))
+            if let prefix { iseqBuilder.restoreCallCopyPrefix(prefix) }
             return true
         }
         let producer = iseqBuilder.accProducer
@@ -4087,6 +4113,28 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             if module.isSameInstance(wasm.instance) {
                 let call = Instruction.CallOperand(callee: callee, arguments: arguments, spAddend: spAddend)
                 if !module.isDebuggable, let copy = iseqBuilder.returnCopy {
+                    if let prefix = iseqBuilder.callCopyPrefix {
+                        let p = prefix.operand
+                        let prefixed: Instruction?
+                        switch copy.instruction {
+                        case .returnCopy(let operand):
+                            prefixed = .compilingCopy3Call(.init(prefixSource0: p.source0, prefixDest0: p.dest0,
+                                prefixSource1: p.source1, prefixDest1: p.dest1, source: operand.source, dest: operand.dest,
+                                rawCallee: call.rawCallee, arguments: arguments, spAddend: spAddend))
+                        case .returnCopy2(let operand):
+                            prefixed = .compilingCopy4Call(.init(prefixSource0: p.source0, prefixDest0: p.dest0,
+                                prefixSource1: p.source1, prefixDest1: p.dest1,
+                                source0: operand.source0, dest0: operand.dest0, source1: operand.source1, dest1: operand.dest1,
+                                rawCallee: call.rawCallee, arguments: arguments, spAddend: spAddend))
+                        default: prefixed = nil
+                        }
+                        if let prefixed {
+                            iseqBuilder.rewind(to: prefix.position)
+                            rewindInstructionMapping(to: prefix.position)
+                            emit(prefixed)
+                            return
+                        }
+                    }
                     let fused: Instruction?
                     switch copy.instruction {
                     case .returnCopy(let operand):

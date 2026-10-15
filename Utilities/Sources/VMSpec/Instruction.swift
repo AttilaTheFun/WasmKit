@@ -1930,6 +1930,10 @@ extension VMGen {
         instructions.append(Instruction(name: "internalCopyCall", documentation: "Copy argument slots and call an internal function", isControl: true, mayUpdateFrame: true, immediateLayout: .copyCall))
         instructions.append(Instruction(name: "compilingCopy2Call", documentation: "Copy argument slots and call an internal function", isControl: true, mayThrow: true, mayUpdateFrame: true, immediateLayout: .copy2Call))
         instructions.append(Instruction(name: "internalCopy2Call", documentation: "Copy argument slots and call an internal function", isControl: true, mayUpdateFrame: true, immediateLayout: .copy2Call))
+        instructions.append(Instruction(name: "compilingCopy3Call", documentation: "Copy a prefix pair and remaining arguments, then call", isControl: true, mayThrow: true, mayUpdateFrame: true, immediateLayout: .copy3Call))
+        instructions.append(Instruction(name: "internalCopy3Call", documentation: "Copy a prefix pair and remaining arguments, then call", isControl: true, mayUpdateFrame: true, immediateLayout: .copy3Call))
+        instructions.append(Instruction(name: "compilingCopy4Call", documentation: "Copy a prefix pair and remaining arguments, then call", isControl: true, mayThrow: true, mayUpdateFrame: true, immediateLayout: .copy4Call))
+        instructions.append(Instruction(name: "internalCopy4Call", documentation: "Copy a prefix pair and remaining arguments, then call", isControl: true, mayUpdateFrame: true, immediateLayout: .copy4Call))
         return instructions
     }
 
