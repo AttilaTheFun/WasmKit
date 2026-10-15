@@ -4756,20 +4756,45 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             emit(make(result), resultRelink: { newResult in make(newResult) })
             return
         }
-        if load == .i32Load {
-            emit(.i32LoadMemory32(.init(pointer: pointer, result: result, offset: offset)),
-                resultRelink: { newResult in
-                    .i32LoadMemory32(.init(pointer: pointer, result: newResult, offset: offset))
-                })
-        } else {
-        emit(
-            forms.plain(Instruction.LoadOperand(offset: UInt64(offset), pointer: pointer, result: result)),
-            resultRelink: { newResult in
-                forms.plain(Instruction.LoadOperand(offset: UInt64(offset), pointer: pointer, result: newResult))
-            }
-        )
-        }
+        let make = Self.memory32LoadInstruction(load)
+        emit(make(.init(pointer: pointer, result: result, offset: offset)),
+            resultRelink: { newResult in make(.init(pointer: pointer, result: newResult, offset: offset)) })
         iseqBuilder.recordAcc(AccRecords(producer: .load(load, pointer: pointer, offset: offset, result: result)))
+    }
+
+    private static func memory32LoadInstruction(_ load: WasmParser.Instruction.Load) -> (Instruction.AccMemoryPointerResultOperand) -> Instruction {
+        switch load {
+        case .i32Load: return Instruction.i32LoadMemory32
+        case .i64Load: return Instruction.i64LoadMemory32
+        case .f32Load: return Instruction.f32LoadMemory32
+        case .f64Load: return Instruction.f64LoadMemory32
+        case .i32Load8S: return Instruction.i32Load8SMemory32
+        case .i32Load8U: return Instruction.i32Load8UMemory32
+        case .i32Load16S: return Instruction.i32Load16SMemory32
+        case .i32Load16U: return Instruction.i32Load16UMemory32
+        case .i64Load8S: return Instruction.i64Load8SMemory32
+        case .i64Load8U: return Instruction.i64Load8UMemory32
+        case .i64Load16S: return Instruction.i64Load16SMemory32
+        case .i64Load16U: return Instruction.i64Load16UMemory32
+        case .i64Load32S: return Instruction.i64Load32SMemory32
+        case .i64Load32U: return Instruction.i64Load32UMemory32
+        default: preconditionFailure("Expected a scalar non-atomic load")
+        }
+    }
+
+    private static func memory32StoreInstruction(_ store: WasmParser.Instruction.Store) -> (Instruction.Memory32StoreOperand) -> Instruction {
+        switch store {
+        case .i32Store: return Instruction.i32StoreMemory32
+        case .i64Store: return Instruction.i64StoreMemory32
+        case .f32Store: return Instruction.f32StoreMemory32
+        case .f64Store: return Instruction.f64StoreMemory32
+        case .i32Store8: return Instruction.i32Store8Memory32
+        case .i32Store16: return Instruction.i32Store16Memory32
+        case .i64Store8: return Instruction.i64Store8Memory32
+        case .i64Store16: return Instruction.i64Store16Memory32
+        case .i64Store32: return Instruction.i64Store32Memory32
+        default: preconditionFailure("Expected a scalar non-atomic store")
+        }
     }
 
     /// A store on a 32-bit memory, which can take its value or its guest
@@ -4808,8 +4833,7 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
                 return
             }
         }
-        emit(
-            forms.plain(Instruction.StoreOperand(offset: UInt64(offset), pointer: pointer, value: value)))
+        emit(Self.memory32StoreInstruction(store)(.init(pointer: pointer, value: value, offset: offset)))
     }
 
     private mutating func visitStore(

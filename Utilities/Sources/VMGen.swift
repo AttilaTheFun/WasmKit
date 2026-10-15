@@ -122,9 +122,16 @@ enum VMGen {
 
     static func generateBasicInstImplementations() -> [String: String] {
         var inlineImpls: [String: String] = [:]
-        inlineImpls["i32LoadMemory32"] = """
-            if let trap = self.memoryLoad32(sp: sp.pointee, md: md.pointee, ms: ms.pointee, immediate: immediate) { %TRAP% }
-            """
+        for op in memoryLoadOps {
+            inlineImpls[op.instruction.name + "Memory32"] = """
+                if let trap = self.memoryLoad32(sp: sp.pointee, md: md.pointee, ms: ms.pointee, immediate: immediate, loadAs: \(op.loadAs).self, castToValue: { \(op.castToValue) }) { %TRAP% }
+                """
+        }
+        for op in memoryStoreOps {
+            inlineImpls[op.instruction.name + "Memory32"] = """
+                if let trap = self.memoryStore32(sp: sp.pointee, md: md.pointee, ms: ms.pointee, immediate: immediate, castFromValue: { \(op.castFromValue) }) { %TRAP% }
+                """
+        }
         inlineImpls["i32AddImmLoad"] = """
             if let trap = self.memoryLoadAddingImmediate(sp: sp.pointee, md: md.pointee, ms: ms.pointee, immediate: immediate) { %TRAP% }
             """

@@ -1924,6 +1924,17 @@ extension VMGen {
         var load32 = Instruction(name: "i32LoadMemory32", documentation: "Load i32 with a 32-bit address and static offset", useCurrentMemory: .read, immediateLayout: .accMemoryPointerResult)
         load32.mayDispatchToTrap = true
         instructions.append(load32)
+        for op in memoryLoadOps where op.instruction.name != "i32Load" {
+            var inst = Instruction(name: op.instruction.name + "Memory32", documentation: "Scalar load on a 32-bit memory", useCurrentMemory: .read, immediateLayout: .accMemoryPointerResult)
+            inst.mayDispatchToTrap = true
+            instructions.append(inst)
+        }
+        for op in memoryStoreOps {
+            var inst = Instruction(name: op.instruction.name + "Memory32", documentation: "Scalar store on a 32-bit memory", useCurrentMemory: .read, immediateLayout: .memory32Store)
+            inst.mayDispatchToTrap = true
+            inst.handlerIdentity = "storeMemory32(\(op.storeWidth))"
+            instructions.append(inst)
+        }
         return instructions
     }
 

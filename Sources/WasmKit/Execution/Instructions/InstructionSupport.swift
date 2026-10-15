@@ -681,6 +681,50 @@ extension Instruction {
             case .i32Load(let op): load("i32.load", op)
             case .i32LoadMemory32(let op):
                 load("i32.load", .init(offset: UInt64(op.offset), pointer: op.pointer, result: op.result))
+            case .i64LoadMemory32(let op):
+                load("i64.load", .init(offset: UInt64(op.offset), pointer: op.pointer, result: op.result))
+            case .f32LoadMemory32(let op):
+                load("f32.load", .init(offset: UInt64(op.offset), pointer: op.pointer, result: op.result))
+            case .f64LoadMemory32(let op):
+                load("f64.load", .init(offset: UInt64(op.offset), pointer: op.pointer, result: op.result))
+            case .i32Load8SMemory32(let op):
+                load("i32.load8_s", .init(offset: UInt64(op.offset), pointer: op.pointer, result: op.result))
+            case .i32Load8UMemory32(let op):
+                load("i32.load8_u", .init(offset: UInt64(op.offset), pointer: op.pointer, result: op.result))
+            case .i32Load16SMemory32(let op):
+                load("i32.load16_s", .init(offset: UInt64(op.offset), pointer: op.pointer, result: op.result))
+            case .i32Load16UMemory32(let op):
+                load("i32.load16_u", .init(offset: UInt64(op.offset), pointer: op.pointer, result: op.result))
+            case .i64Load8SMemory32(let op):
+                load("i64.load8_s", .init(offset: UInt64(op.offset), pointer: op.pointer, result: op.result))
+            case .i64Load8UMemory32(let op):
+                load("i64.load8_u", .init(offset: UInt64(op.offset), pointer: op.pointer, result: op.result))
+            case .i64Load16SMemory32(let op):
+                load("i64.load16_s", .init(offset: UInt64(op.offset), pointer: op.pointer, result: op.result))
+            case .i64Load16UMemory32(let op):
+                load("i64.load16_u", .init(offset: UInt64(op.offset), pointer: op.pointer, result: op.result))
+            case .i64Load32SMemory32(let op):
+                load("i64.load32_s", .init(offset: UInt64(op.offset), pointer: op.pointer, result: op.result))
+            case .i64Load32UMemory32(let op):
+                load("i64.load32_u", .init(offset: UInt64(op.offset), pointer: op.pointer, result: op.result))
+            case .i32StoreMemory32(let op):
+                store("i32.store", .init(offset: UInt64(op.offset), pointer: op.pointer, value: op.value))
+            case .i64StoreMemory32(let op):
+                store("i64.store", .init(offset: UInt64(op.offset), pointer: op.pointer, value: op.value))
+            case .f32StoreMemory32(let op):
+                store("f32.store", .init(offset: UInt64(op.offset), pointer: op.pointer, value: op.value))
+            case .f64StoreMemory32(let op):
+                store("f64.store", .init(offset: UInt64(op.offset), pointer: op.pointer, value: op.value))
+            case .i32Store8Memory32(let op):
+                store("i32.store8", .init(offset: UInt64(op.offset), pointer: op.pointer, value: op.value))
+            case .i32Store16Memory32(let op):
+                store("i32.store16", .init(offset: UInt64(op.offset), pointer: op.pointer, value: op.value))
+            case .i64Store8Memory32(let op):
+                store("i64.store8", .init(offset: UInt64(op.offset), pointer: op.pointer, value: op.value))
+            case .i64Store16Memory32(let op):
+                store("i64.store16", .init(offset: UInt64(op.offset), pointer: op.pointer, value: op.value))
+            case .i64Store32Memory32(let op):
+                store("i64.store32", .init(offset: UInt64(op.offset), pointer: op.pointer, value: op.value))
             case .i64Load(let op): load("i64.load", op)
             case .f32Load(let op): load("f32.load", op)
             case .f64Load(let op): load("f64.load", op)

@@ -2430,6 +2430,50 @@ enum Instruction {
     case i32AddImmLoad(Instruction.I32AddImmLoadOperand)
     /// Load i32 with a 32-bit address and static offset
     case i32LoadMemory32(Instruction.AccMemoryPointerResultOperand)
+    /// Scalar load on a 32-bit memory
+    case i64LoadMemory32(Instruction.AccMemoryPointerResultOperand)
+    /// Scalar load on a 32-bit memory
+    case f32LoadMemory32(Instruction.AccMemoryPointerResultOperand)
+    /// Scalar load on a 32-bit memory
+    case f64LoadMemory32(Instruction.AccMemoryPointerResultOperand)
+    /// Scalar load on a 32-bit memory
+    case i32Load8SMemory32(Instruction.AccMemoryPointerResultOperand)
+    /// Scalar load on a 32-bit memory
+    case i32Load8UMemory32(Instruction.AccMemoryPointerResultOperand)
+    /// Scalar load on a 32-bit memory
+    case i32Load16SMemory32(Instruction.AccMemoryPointerResultOperand)
+    /// Scalar load on a 32-bit memory
+    case i32Load16UMemory32(Instruction.AccMemoryPointerResultOperand)
+    /// Scalar load on a 32-bit memory
+    case i64Load8SMemory32(Instruction.AccMemoryPointerResultOperand)
+    /// Scalar load on a 32-bit memory
+    case i64Load8UMemory32(Instruction.AccMemoryPointerResultOperand)
+    /// Scalar load on a 32-bit memory
+    case i64Load16SMemory32(Instruction.AccMemoryPointerResultOperand)
+    /// Scalar load on a 32-bit memory
+    case i64Load16UMemory32(Instruction.AccMemoryPointerResultOperand)
+    /// Scalar load on a 32-bit memory
+    case i64Load32SMemory32(Instruction.AccMemoryPointerResultOperand)
+    /// Scalar load on a 32-bit memory
+    case i64Load32UMemory32(Instruction.AccMemoryPointerResultOperand)
+    /// Scalar store on a 32-bit memory
+    case i32StoreMemory32(Instruction.Memory32StoreOperand)
+    /// Scalar store on a 32-bit memory
+    case i64StoreMemory32(Instruction.Memory32StoreOperand)
+    /// Scalar store on a 32-bit memory
+    case f32StoreMemory32(Instruction.Memory32StoreOperand)
+    /// Scalar store on a 32-bit memory
+    case f64StoreMemory32(Instruction.Memory32StoreOperand)
+    /// Scalar store on a 32-bit memory
+    case i32Store8Memory32(Instruction.Memory32StoreOperand)
+    /// Scalar store on a 32-bit memory
+    case i32Store16Memory32(Instruction.Memory32StoreOperand)
+    /// Scalar store on a 32-bit memory
+    case i64Store8Memory32(Instruction.Memory32StoreOperand)
+    /// Scalar store on a 32-bit memory
+    case i64Store16Memory32(Instruction.Memory32StoreOperand)
+    /// Scalar store on a 32-bit memory
+    case i64Store32Memory32(Instruction.Memory32StoreOperand)
 }
 
 extension Instruction {
@@ -3807,6 +3851,19 @@ extension Instruction {
             emitSlot { unsafeBitCast(($0.imm, $0.offset) as (Int32, UInt32), to: CodeSlot.self) }
         }
     }
+
+    struct Memory32StoreOperand: InstructionImmediate {
+        var pointer: VReg
+        var value: VReg
+        var offset: UInt32
+        @inline(__always) static func load(from pc: inout Pc) -> Self {
+            let (pointer, value, offset) = pc.read((VReg, VReg, UInt32).self)
+            return Self(pointer: pointer, value: value, offset: offset)
+        }
+        @inline(__always) static func emit(to emitSlot: ((Self) -> CodeSlot) -> Void) {
+            emitSlot { unsafeBitCast(($0.pointer, $0.value, $0.offset) as (VReg, VReg, UInt32), to: CodeSlot.self) }
+        }
+    }
 }
 
 extension Instruction {
@@ -4545,6 +4602,28 @@ extension Instruction {
         case .i32GlobalSubSet(let immediate): return immediate
         case .i32AddImmLoad(let immediate): return immediate
         case .i32LoadMemory32(let immediate): return immediate
+        case .i64LoadMemory32(let immediate): return immediate
+        case .f32LoadMemory32(let immediate): return immediate
+        case .f64LoadMemory32(let immediate): return immediate
+        case .i32Load8SMemory32(let immediate): return immediate
+        case .i32Load8UMemory32(let immediate): return immediate
+        case .i32Load16SMemory32(let immediate): return immediate
+        case .i32Load16UMemory32(let immediate): return immediate
+        case .i64Load8SMemory32(let immediate): return immediate
+        case .i64Load8UMemory32(let immediate): return immediate
+        case .i64Load16SMemory32(let immediate): return immediate
+        case .i64Load16UMemory32(let immediate): return immediate
+        case .i64Load32SMemory32(let immediate): return immediate
+        case .i64Load32UMemory32(let immediate): return immediate
+        case .i32StoreMemory32(let immediate): return immediate
+        case .i64StoreMemory32(let immediate): return immediate
+        case .f32StoreMemory32(let immediate): return immediate
+        case .f64StoreMemory32(let immediate): return immediate
+        case .i32Store8Memory32(let immediate): return immediate
+        case .i32Store16Memory32(let immediate): return immediate
+        case .i64Store8Memory32(let immediate): return immediate
+        case .i64Store16Memory32(let immediate): return immediate
+        case .i64Store32Memory32(let immediate): return immediate
         default: return nil
         }
     }
@@ -5287,6 +5366,28 @@ extension Instruction {
         case .i32GlobalSubSet(let immediate): immediate.emit(to: emit)
         case .i32AddImmLoad(let immediate): immediate.emit(to: emit)
         case .i32LoadMemory32(let immediate): immediate.emit(to: emit)
+        case .i64LoadMemory32(let immediate): immediate.emit(to: emit)
+        case .f32LoadMemory32(let immediate): immediate.emit(to: emit)
+        case .f64LoadMemory32(let immediate): immediate.emit(to: emit)
+        case .i32Load8SMemory32(let immediate): immediate.emit(to: emit)
+        case .i32Load8UMemory32(let immediate): immediate.emit(to: emit)
+        case .i32Load16SMemory32(let immediate): immediate.emit(to: emit)
+        case .i32Load16UMemory32(let immediate): immediate.emit(to: emit)
+        case .i64Load8SMemory32(let immediate): immediate.emit(to: emit)
+        case .i64Load8UMemory32(let immediate): immediate.emit(to: emit)
+        case .i64Load16SMemory32(let immediate): immediate.emit(to: emit)
+        case .i64Load16UMemory32(let immediate): immediate.emit(to: emit)
+        case .i64Load32SMemory32(let immediate): immediate.emit(to: emit)
+        case .i64Load32UMemory32(let immediate): immediate.emit(to: emit)
+        case .i32StoreMemory32(let immediate): immediate.emit(to: emit)
+        case .i64StoreMemory32(let immediate): immediate.emit(to: emit)
+        case .f32StoreMemory32(let immediate): immediate.emit(to: emit)
+        case .f64StoreMemory32(let immediate): immediate.emit(to: emit)
+        case .i32Store8Memory32(let immediate): immediate.emit(to: emit)
+        case .i32Store16Memory32(let immediate): immediate.emit(to: emit)
+        case .i64Store8Memory32(let immediate): immediate.emit(to: emit)
+        case .i64Store16Memory32(let immediate): immediate.emit(to: emit)
+        case .i64Store32Memory32(let immediate): immediate.emit(to: emit)
         default: return
         }
     }
@@ -6041,13 +6142,35 @@ extension Instruction {
         case .i32GlobalAddSet: return 741
         case .i32GlobalSubSet: return 742
         case .i32AddImmLoad: return 743
-        default: return 744  // .i32LoadMemory32
+        case .i32LoadMemory32: return 744
+        case .i64LoadMemory32: return 745
+        case .f32LoadMemory32: return 746
+        case .f64LoadMemory32: return 747
+        case .i32Load8SMemory32: return 748
+        case .i32Load8UMemory32: return 749
+        case .i32Load16SMemory32: return 750
+        case .i32Load16UMemory32: return 751
+        case .i64Load8SMemory32: return 752
+        case .i64Load8UMemory32: return 753
+        case .i64Load16SMemory32: return 754
+        case .i64Load16UMemory32: return 755
+        case .i64Load32SMemory32: return 756
+        case .i64Load32UMemory32: return 757
+        case .i32StoreMemory32: return 758
+        case .i64StoreMemory32: return 759
+        case .f32StoreMemory32: return 760
+        case .f64StoreMemory32: return 761
+        case .i32Store8Memory32: return 762
+        case .i32Store16Memory32: return 763
+        case .i64Store8Memory32: return 764
+        case .i64Store16Memory32: return 765
+        default: return 766  // .i64Store32Memory32
         }
     }
 }
 extension Instruction {
     /// The number of opcodes, trap pseudo-instructions included.
-    static let opcodeCount = 745
+    static let opcodeCount = 767
 
     /// Whether only the direct-threaded dispatcher implements this instruction;
     /// `Execution.doExecute` has no case for it.
@@ -6815,6 +6938,28 @@ extension Instruction {
         case 742: return .i32GlobalSubSet(Instruction.I32GlobalAddSetOperand.load(from: &pc))
         case 743: return .i32AddImmLoad(Instruction.I32AddImmLoadOperand.load(from: &pc))
         case 744: return .i32LoadMemory32(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 745: return .i64LoadMemory32(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 746: return .f32LoadMemory32(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 747: return .f64LoadMemory32(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 748: return .i32Load8SMemory32(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 749: return .i32Load8UMemory32(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 750: return .i32Load16SMemory32(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 751: return .i32Load16UMemory32(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 752: return .i64Load8SMemory32(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 753: return .i64Load8UMemory32(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 754: return .i64Load16SMemory32(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 755: return .i64Load16UMemory32(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 756: return .i64Load32SMemory32(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 757: return .i64Load32UMemory32(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 758: return .i32StoreMemory32(Instruction.Memory32StoreOperand.load(from: &pc))
+        case 759: return .i64StoreMemory32(Instruction.Memory32StoreOperand.load(from: &pc))
+        case 760: return .f32StoreMemory32(Instruction.Memory32StoreOperand.load(from: &pc))
+        case 761: return .f64StoreMemory32(Instruction.Memory32StoreOperand.load(from: &pc))
+        case 762: return .i32Store8Memory32(Instruction.Memory32StoreOperand.load(from: &pc))
+        case 763: return .i32Store16Memory32(Instruction.Memory32StoreOperand.load(from: &pc))
+        case 764: return .i64Store8Memory32(Instruction.Memory32StoreOperand.load(from: &pc))
+        case 765: return .i64Store16Memory32(Instruction.Memory32StoreOperand.load(from: &pc))
+        case 766: return .i64Store32Memory32(Instruction.Memory32StoreOperand.load(from: &pc))
         default: fatalError("Unknown instruction opcode: \(opcode)")
         }
     }
@@ -7574,6 +7719,28 @@ extension Instruction {
         case 742: return "i32GlobalSubSet"
         case 743: return "i32AddImmLoad"
         case 744: return "i32LoadMemory32"
+        case 745: return "i64LoadMemory32"
+        case 746: return "f32LoadMemory32"
+        case 747: return "f64LoadMemory32"
+        case 748: return "i32Load8SMemory32"
+        case 749: return "i32Load8UMemory32"
+        case 750: return "i32Load16SMemory32"
+        case 751: return "i32Load16UMemory32"
+        case 752: return "i64Load8SMemory32"
+        case 753: return "i64Load8UMemory32"
+        case 754: return "i64Load16SMemory32"
+        case 755: return "i64Load16UMemory32"
+        case 756: return "i64Load32SMemory32"
+        case 757: return "i64Load32UMemory32"
+        case 758: return "i32StoreMemory32"
+        case 759: return "i64StoreMemory32"
+        case 760: return "f32StoreMemory32"
+        case 761: return "f64StoreMemory32"
+        case 762: return "i32Store8Memory32"
+        case 763: return "i32Store16Memory32"
+        case 764: return "i64Store8Memory32"
+        case 765: return "i64Store16Memory32"
+        case 766: return "i64Store32Memory32"
         default: fatalError("Unknown instruction index: \(opcode)")
         }
     }

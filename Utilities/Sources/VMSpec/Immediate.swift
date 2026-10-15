@@ -330,6 +330,12 @@ extension VMGen.ImmediateLayout {
     }
 
     /// `sp[result] = ireg = load(sp[pointer] + offset)`, on a 32-bit memory.
+    static let memory32Store = Self(name: "Memory32StoreOperand") {
+        $0.field(name: "pointer", type: .VReg)
+        $0.field(name: "value", type: .VReg)
+        $0.field(name: "offset", type: .UInt32)
+    }
+
     static let accMemoryPointerResult = Self(name: "AccMemoryPointerResultOperand") {
         $0.field(name: "pointer", type: .VReg)
         $0.field(name: "result", type: .VReg)
