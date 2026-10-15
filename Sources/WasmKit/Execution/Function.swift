@@ -291,7 +291,7 @@ extension InternalFunction {
     func compiledIseq() -> InstructionSequence? {
         guard isWasm else { return nil }
         switch self.wasm.code {
-        case .compiled(let iseq), .debuggable(_, let iseq): return iseq
+        case .compiled(let iseq), .debuggable(let iseq, _): return iseq
         case .uncompiled: return nil
         }
     }
@@ -305,7 +305,7 @@ extension InternalFunction {
     ) {
         let entity = self.wasm
         switch entity.code {
-        case .compiled(let iseq), .debuggable(_, let iseq):
+        case .compiled(let iseq), .debuggable(let iseq, _):
             return (iseq, entity)
         case .uncompiled:
             preconditionFailure()
@@ -335,7 +335,7 @@ struct WasmFunctionEntity {
         switch code {
         case .uncompiled(let code):
             return try compile(store: store, code: code)
-        case .compiled(let iseq), .debuggable(_, let iseq):
+        case .compiled(let iseq), .debuggable(let iseq, _):
             return iseq
         }
     }
@@ -376,13 +376,13 @@ extension EntityHandle<WasmFunctionEntity> {
             return try self.withValue {
                 let iseq = try $0.compile(store: store, code: code)
                 if $0.instance.isDebuggable {
-                    $0.code = .debuggable(code, iseq)
+                    $0.code = .debuggable(iseq, code)
                 } else {
                     $0.code = .compiled(iseq)
                 }
                 return iseq
             }
-        case .compiled(let iseq), .debuggable(_, let iseq):
+        case .compiled(let iseq), .debuggable(let iseq, _):
             return iseq
         }
     }
@@ -449,7 +449,10 @@ struct InstructionSequence {
 enum CodeBody {
     case uncompiled(InternalUncompiledCode)
     case compiled(InstructionSequence)
-    case debuggable(InternalUncompiledCode, InstructionSequence)
+    // Keep the instruction sequence first in both compiled representations.
+    // Hot calls can then load the same fields without selecting an alternate
+    // payload layout for debuggable code.
+    case debuggable(InstructionSequence, InternalUncompiledCode)
 }
 
 extension Reference {
