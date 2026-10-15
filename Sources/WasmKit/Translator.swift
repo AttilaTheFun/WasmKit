@@ -4756,12 +4756,19 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             emit(make(result), resultRelink: { newResult in make(newResult) })
             return
         }
+        if load == .i32Load {
+            emit(.i32LoadMemory32(.init(pointer: pointer, result: result, offset: offset)),
+                resultRelink: { newResult in
+                    .i32LoadMemory32(.init(pointer: pointer, result: newResult, offset: offset))
+                })
+        } else {
         emit(
             forms.plain(Instruction.LoadOperand(offset: UInt64(offset), pointer: pointer, result: result)),
             resultRelink: { newResult in
                 forms.plain(Instruction.LoadOperand(offset: UInt64(offset), pointer: pointer, result: newResult))
             }
         )
+        }
         iseqBuilder.recordAcc(AccRecords(producer: .load(load, pointer: pointer, offset: offset, result: result)))
     }
 

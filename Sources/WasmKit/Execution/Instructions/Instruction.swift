@@ -2428,6 +2428,8 @@ enum Instruction {
     case i32GlobalSubSet(Instruction.I32GlobalAddSetOperand)
     /// Add a wrapping address immediate and load i32
     case i32AddImmLoad(Instruction.I32AddImmLoadOperand)
+    /// Load i32 with a 32-bit address and static offset
+    case i32LoadMemory32(Instruction.AccMemoryPointerResultOperand)
 }
 
 extension Instruction {
@@ -4542,6 +4544,7 @@ extension Instruction {
         case .i32GlobalAddSet(let immediate): return immediate
         case .i32GlobalSubSet(let immediate): return immediate
         case .i32AddImmLoad(let immediate): return immediate
+        case .i32LoadMemory32(let immediate): return immediate
         default: return nil
         }
     }
@@ -5283,6 +5286,7 @@ extension Instruction {
         case .i32GlobalAddSet(let immediate): immediate.emit(to: emit)
         case .i32GlobalSubSet(let immediate): immediate.emit(to: emit)
         case .i32AddImmLoad(let immediate): immediate.emit(to: emit)
+        case .i32LoadMemory32(let immediate): immediate.emit(to: emit)
         default: return
         }
     }
@@ -6036,13 +6040,14 @@ extension Instruction {
         case .i32AddImmGlobalSet: return 740
         case .i32GlobalAddSet: return 741
         case .i32GlobalSubSet: return 742
-        default: return 743  // .i32AddImmLoad
+        case .i32AddImmLoad: return 743
+        default: return 744  // .i32LoadMemory32
         }
     }
 }
 extension Instruction {
     /// The number of opcodes, trap pseudo-instructions included.
-    static let opcodeCount = 744
+    static let opcodeCount = 745
 
     /// Whether only the direct-threaded dispatcher implements this instruction;
     /// `Execution.doExecute` has no case for it.
@@ -6809,6 +6814,7 @@ extension Instruction {
         case 741: return .i32GlobalAddSet(Instruction.I32GlobalAddSetOperand.load(from: &pc))
         case 742: return .i32GlobalSubSet(Instruction.I32GlobalAddSetOperand.load(from: &pc))
         case 743: return .i32AddImmLoad(Instruction.I32AddImmLoadOperand.load(from: &pc))
+        case 744: return .i32LoadMemory32(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
         default: fatalError("Unknown instruction opcode: \(opcode)")
         }
     }
@@ -7567,6 +7573,7 @@ extension Instruction {
         case 741: return "i32GlobalAddSet"
         case 742: return "i32GlobalSubSet"
         case 743: return "i32AddImmLoad"
+        case 744: return "i32LoadMemory32"
         default: fatalError("Unknown instruction index: \(opcode)")
         }
     }

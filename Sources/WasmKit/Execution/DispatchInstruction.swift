@@ -456,6 +456,7 @@ extension Execution {
         case 741: return self.execute_i32GlobalAddSet(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 742: return self.execute_i32GlobalSubSet(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 743: return try self.executeToken_i32AddImmLoad(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 744: return try self.executeToken_i32LoadMemory32(sp: &sp, pc: &pc, md: &md, ms: &ms)
         default: preconditionFailure("Unknown instruction!?")
 
         }
@@ -1281,6 +1282,14 @@ extension Execution {
     mutating func executeToken_i32AddImmLoad(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) throws -> CodeSlot {
         let immediate = Instruction.I32AddImmLoadOperand.load(from: &pc.pointee)
         if let trap = self.memoryLoadAddingImmediate(sp: sp.pointee, md: md.pointee, ms: ms.pointee, immediate: immediate) { try trap.raise() }
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        return next
+    }
+    @inline(__always)
+    mutating func executeToken_i32LoadMemory32(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) throws -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerResultOperand.load(from: &pc.pointee)
+        if let trap = self.memoryLoad32(sp: sp.pointee, md: md.pointee, ms: ms.pointee, immediate: immediate) { try trap.raise() }
         let next = pc.pointee.pointee
         pc.pointee = pc.pointee.advanced(by: 1)
         return next
@@ -7292,6 +7301,14 @@ sp.pointee[i64: immediate.result] = mixed &* sp.pointee[i64: immediate.multiplie
         let next = pc.pointee.pointee
         pc.pointee = pc.pointee.advanced(by: 1)
         if let trap = self.memoryLoadAddingImmediate(sp: sp.pointee, md: md.pointee, ms: ms.pointee, immediate: immediate) { return trap.directThreadedHeadSlot }
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32LoadMemory32") @inline(__always)
+    mutating func execute_i32LoadMemory32(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        if let trap = self.memoryLoad32(sp: sp.pointee, md: md.pointee, ms: ms.pointee, immediate: immediate) { return trap.directThreadedHeadSlot }
         return next
     }
 }
