@@ -142,6 +142,17 @@ struct Execution: ~Copyable {
         let src = iseq.frameInitAnchor
         let dst = UnsafeMutableRawPointer(sp)
         let savedSlots = -StackLayout.numberOfSavingSlots * MemoryLayout<UntypedValue>.stride
+        // Tiny images need no overlapping head/tail copy. In particular a
+        // 16-byte image otherwise loads and stores the same vector twice.
+        if offset >= savedSlots - 16 {
+            if offset == savedSlots - 16 {
+                Self.copy16(dst, src, savedSlots - 16)
+            } else if offset == savedSlots - 8 {
+                dst.storeBytes(of: src.load(fromByteOffset: savedSlots - 8, as: UInt64.self),
+                               toByteOffset: savedSlots - 8, as: UInt64.self)
+            }
+            return
+        }
         // Straight-line, overlapping head/tail copies. Written out rather than
         // looped so that no loop remains for the optimizer to turn back into a
         // `memcpy` call.
@@ -154,8 +165,6 @@ struct Execution: ~Copyable {
         } else if offset <= savedSlots - 16 {
             Self.copy16(dst, src, offset)
             Self.copy16(dst, src, savedSlots - 16)
-        } else if offset == savedSlots - 8 {
-            (dst + offset).storeBytes(of: src.load(fromByteOffset: offset, as: UInt64.self), as: UInt64.self)
         }
     }
 
