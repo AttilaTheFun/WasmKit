@@ -2035,6 +2035,7 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         private var copyAfterAcc: (producer: AccProducer, source: VReg, dest: VReg, end: MetaProgramCounter)?
         /// The last emitted single copy, for pairing it with the next one.
         private var lastCopy: (source: VReg, dest: VReg, position: MetaProgramCounter, end: MetaProgramCounter)?
+        private var lastCopyGroup: (copies: [(source: VReg, dest: VReg)], position: MetaProgramCounter, end: MetaProgramCounter)?
         /// The highest offset any label has been pinned at.
         ///
         /// Rewinding the instruction buffer past a pinned label would silently
@@ -2235,6 +2236,19 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             lastAccAndSlot = nil
             copyAfterAcc = nil
             lastCopy = nil
+            lastCopyGroup = nil
+        }
+
+        mutating func recordCopyGroup(_ copies: [(source: VReg, dest: VReg)], position: MetaProgramCounter) {
+            lastCopyGroup = (copies, position, insertingPC)
+        }
+
+        fileprivate func extensibleCopyGroup(reading source: VReg) -> (copies: [(source: VReg, dest: VReg)], position: MetaProgramCounter)? {
+            guard let group = lastCopyGroup, group.copies.count < 4,
+                group.end.offsetFromHead == insertingPC.offsetFromHead,
+                group.copies.allSatisfy({ $0.dest != source }), canRewind(to: group.position)
+            else { return nil }
+            return (group.copies, group.position)
         }
 
         /// Records a single copy just emitted at `position`.
@@ -2771,10 +2785,26 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
     @discardableResult
     private mutating func emitCopyStack(from source: VReg, to dest: VReg) -> Bool {
         guard source != dest else { return false }
+        if iseqBuilder.emitsDirectOnlyInstructions, let group = iseqBuilder.extensibleCopyGroup(reading: source) {
+            let copies = group.copies + [(source: source, dest: dest)]
+            iseqBuilder.rewind(to: group.position)
+            self.rewindInstructionMapping(to: group.position)
+            if copies.count == 3 {
+                emit(.copyStack3(.init(source0: copies[0].source, dest0: copies[0].dest,
+                    source1: copies[1].source, dest1: copies[1].dest, source2: source, dest2: dest)))
+            } else {
+                emit(.copyStack4(.init(source0: copies[0].source, dest0: copies[0].dest,
+                    source1: copies[1].source, dest1: copies[1].dest,
+                    source2: copies[2].source, dest2: copies[2].dest, source3: source, dest3: dest)))
+            }
+            iseqBuilder.recordCopyGroup(copies, position: group.position)
+            return true
+        }
         if iseqBuilder.emitsDirectOnlyInstructions, let previous = iseqBuilder.pairableCopy(reading: source) {
             iseqBuilder.rewind(to: previous.position)
             self.rewindInstructionMapping(to: previous.position)
             emit(.copyStack2(Instruction.CopyStack2Operand(source0: previous.source, dest0: previous.dest, source1: source, dest1: dest)))
+            iseqBuilder.recordCopyGroup([(previous.source, previous.dest), (source, dest)], position: previous.position)
             return true
         }
         let producer = iseqBuilder.accProducer

@@ -42,6 +42,28 @@ extension Execution {
         sp[immediate.dest0] = value0
         sp[immediate.dest1] = value1
     }
+    @inline(__always)
+    mutating func copyStack3(sp: Sp, immediate: Instruction.CopyStack3Operand) {
+        let value0 = sp[immediate.source0]
+        let value1 = sp[immediate.source1]
+        let value2 = sp[immediate.source2]
+        sp[immediate.dest0] = value0
+        sp[immediate.dest1] = value1
+        sp[immediate.dest2] = value2
+    }
+
+    @inline(__always)
+    mutating func copyStack4(sp: Sp, immediate: Instruction.CopyStack4Operand) {
+        let value0 = sp[immediate.source0]
+        let value1 = sp[immediate.source1]
+        let value2 = sp[immediate.source2]
+        let value3 = sp[immediate.source3]
+        sp[immediate.dest0] = value0
+        sp[immediate.dest1] = value1
+        sp[immediate.dest2] = value2
+        sp[immediate.dest3] = value3
+    }
+
 }
 
 /// > Note:

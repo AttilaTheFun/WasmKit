@@ -4816,6 +4816,22 @@ WASMKIT_TC_CC static inline void wasmkit_tc_copyStack2(Sp sp, Pc pc, Md md, Ms m
     WASMKIT_DEAD_ACCUMULATOR(double, dead_freg);
     WASMKIT_TC_MUSTTAIL return ((wasmkit_tc_exec)next)(sp, pc, md, ms, dead_ireg, dead_freg, state);
 }
+WASMKIT_TC_CC static inline void wasmkit_tc_copyStack3(Sp sp, Pc pc, Md md, Ms ms, uint64_t ireg, double freg, WASMKIT_TC_CONTEXT void *state) {
+    SWIFT_CC(swift) uint64_t wasmkit_execute_copyStack3(Sp *sp, Pc *pc, Md *md, Ms *ms, SWIFT_CONTEXT void *state, SWIFT_ERROR_RESULT void **error);
+    void * _Nullable error = NULL; uint64_t next;
+    INLINE_CALL next = wasmkit_execute_copyStack3(&sp, &pc, &md, &ms, state, &error);
+    WASMKIT_DEAD_ACCUMULATOR(uint64_t, dead_ireg);
+    WASMKIT_DEAD_ACCUMULATOR(double, dead_freg);
+    WASMKIT_TC_MUSTTAIL return ((wasmkit_tc_exec)next)(sp, pc, md, ms, dead_ireg, dead_freg, state);
+}
+WASMKIT_TC_CC static inline void wasmkit_tc_copyStack4(Sp sp, Pc pc, Md md, Ms ms, uint64_t ireg, double freg, WASMKIT_TC_CONTEXT void *state) {
+    SWIFT_CC(swift) uint64_t wasmkit_execute_copyStack4(Sp *sp, Pc *pc, Md *md, Ms *ms, SWIFT_CONTEXT void *state, SWIFT_ERROR_RESULT void **error);
+    void * _Nullable error = NULL; uint64_t next;
+    INLINE_CALL next = wasmkit_execute_copyStack4(&sp, &pc, &md, &ms, state, &error);
+    WASMKIT_DEAD_ACCUMULATOR(uint64_t, dead_ireg);
+    WASMKIT_DEAD_ACCUMULATOR(double, dead_freg);
+    WASMKIT_TC_MUSTTAIL return ((wasmkit_tc_exec)next)(sp, pc, md, ms, dead_ireg, dead_freg, state);
+}
 WASMKIT_TC_CC static inline void wasmkit_tc_selectI32Eq(Sp sp, Pc pc, Md md, Ms ms, uint64_t ireg, double freg, WASMKIT_TC_CONTEXT void *state) {
     SWIFT_CC(swift) uint64_t wasmkit_execute_selectI32Eq(Sp *sp, Pc *pc, Md *md, Ms *ms, SWIFT_CONTEXT void *state, SWIFT_ERROR_RESULT void **error);
     void * _Nullable error = NULL; uint64_t next;
@@ -5809,6 +5825,8 @@ static const uintptr_t wasmkit_tc_exec_handlers[] = {
     (uintptr_t)((wasmkit_tc_exec)&wasmkit_tc_copyStackAccToSlot),
     (uintptr_t)((wasmkit_tc_exec)&wasmkit_tc_selectAcc),
     (uintptr_t)((wasmkit_tc_exec)&wasmkit_tc_copyStack2),
+    (uintptr_t)((wasmkit_tc_exec)&wasmkit_tc_copyStack3),
+    (uintptr_t)((wasmkit_tc_exec)&wasmkit_tc_copyStack4),
     (uintptr_t)((wasmkit_tc_exec)&wasmkit_tc_selectI32Eq),
     (uintptr_t)((wasmkit_tc_exec)&wasmkit_tc_selectI32LtS),
     (uintptr_t)((wasmkit_tc_exec)&wasmkit_tc_selectI32LtU),

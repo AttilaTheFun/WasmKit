@@ -2280,6 +2280,10 @@ enum Instruction {
     case selectAcc(Instruction.SelectAccOperand)
     /// Two register copies, `sp[dest0] = sp[source0]` then `sp[dest1] = sp[source1]`, where the second does not read the first's destination
     case copyStack2(Instruction.CopyStack2Operand)
+    /// Independent register copies with all sources read before writes
+    case copyStack3(Instruction.CopyStack3Operand)
+    /// Independent register copies with all sources read before writes
+    case copyStack4(Instruction.CopyStack4Operand)
     /// `select` whose condition is `i32.eq` of two slots
     case selectI32Eq(Instruction.SelectCmpOperand)
     /// `select` whose condition is `i32.lt_s` of two slots
@@ -3529,6 +3533,70 @@ extension Instruction {
         }
     }
 
+    struct CopyStack3Operand: InstructionImmediate {
+        var source0: VReg
+        var dest0: VReg
+        var source1: VReg
+        var dest1: VReg
+        var source2: VReg
+        var dest2: VReg
+        @inline(__always) static func load(from pc: inout Pc) -> Self {
+            #if _endian(little)
+                let word0 = pc.read(UInt64.self)
+                let source0 = VReg(byteOffset: Int16(truncatingIfNeeded: word0))
+                let dest0 = VReg(byteOffset: Int16(truncatingIfNeeded: word0 >> 16))
+                let source1 = VReg(byteOffset: Int16(truncatingIfNeeded: word0 >> 32))
+                let dest1 = VReg(byteOffset: Int16(truncatingIfNeeded: word0 >> 48))
+                let word1 = pc.read(UInt64.self)
+                let source2 = VReg(byteOffset: Int16(truncatingIfNeeded: word1))
+                let dest2 = VReg(byteOffset: Int16(truncatingIfNeeded: word1 >> 16))
+                return Self(source0: source0, dest0: dest0, source1: source1, dest1: dest1, source2: source2, dest2: dest2)
+            #else
+                let (source0, dest0, source1, dest1) = pc.read((VReg, VReg, VReg, VReg).self)
+                let (source2, dest2, _, _, _, _) = pc.read((VReg, VReg, UInt8, UInt8, UInt8, UInt8).self)
+                return Self(source0: source0, dest0: dest0, source1: source1, dest1: dest1, source2: source2, dest2: dest2)
+            #endif
+        }
+        @inline(__always) static func emit(to emitSlot: ((Self) -> CodeSlot) -> Void) {
+            emitSlot { unsafeBitCast(($0.source0, $0.dest0, $0.source1, $0.dest1) as (VReg, VReg, VReg, VReg), to: CodeSlot.self) }
+            emitSlot { unsafeBitCast(($0.source2, $0.dest2, 0, 0, 0, 0) as (VReg, VReg, UInt8, UInt8, UInt8, UInt8), to: CodeSlot.self) }
+        }
+    }
+
+    struct CopyStack4Operand: InstructionImmediate {
+        var source0: VReg
+        var dest0: VReg
+        var source1: VReg
+        var dest1: VReg
+        var source2: VReg
+        var dest2: VReg
+        var source3: VReg
+        var dest3: VReg
+        @inline(__always) static func load(from pc: inout Pc) -> Self {
+            #if _endian(little)
+                let word0 = pc.read(UInt64.self)
+                let source0 = VReg(byteOffset: Int16(truncatingIfNeeded: word0))
+                let dest0 = VReg(byteOffset: Int16(truncatingIfNeeded: word0 >> 16))
+                let source1 = VReg(byteOffset: Int16(truncatingIfNeeded: word0 >> 32))
+                let dest1 = VReg(byteOffset: Int16(truncatingIfNeeded: word0 >> 48))
+                let word1 = pc.read(UInt64.self)
+                let source2 = VReg(byteOffset: Int16(truncatingIfNeeded: word1))
+                let dest2 = VReg(byteOffset: Int16(truncatingIfNeeded: word1 >> 16))
+                let source3 = VReg(byteOffset: Int16(truncatingIfNeeded: word1 >> 32))
+                let dest3 = VReg(byteOffset: Int16(truncatingIfNeeded: word1 >> 48))
+                return Self(source0: source0, dest0: dest0, source1: source1, dest1: dest1, source2: source2, dest2: dest2, source3: source3, dest3: dest3)
+            #else
+                let (source0, dest0, source1, dest1) = pc.read((VReg, VReg, VReg, VReg).self)
+                let (source2, dest2, source3, dest3) = pc.read((VReg, VReg, VReg, VReg).self)
+                return Self(source0: source0, dest0: dest0, source1: source1, dest1: dest1, source2: source2, dest2: dest2, source3: source3, dest3: dest3)
+            #endif
+        }
+        @inline(__always) static func emit(to emitSlot: ((Self) -> CodeSlot) -> Void) {
+            emitSlot { unsafeBitCast(($0.source0, $0.dest0, $0.source1, $0.dest1) as (VReg, VReg, VReg, VReg), to: CodeSlot.self) }
+            emitSlot { unsafeBitCast(($0.source2, $0.dest2, $0.source3, $0.dest3) as (VReg, VReg, VReg, VReg), to: CodeSlot.self) }
+        }
+    }
+
     struct SelectCmpOperand: InstructionImmediate {
         var result: VReg
         var lhs: VReg
@@ -4374,6 +4442,8 @@ extension Instruction {
         case .copyStackAccToSlot(let immediate): return immediate
         case .selectAcc(let immediate): return immediate
         case .copyStack2(let immediate): return immediate
+        case .copyStack3(let immediate): return immediate
+        case .copyStack4(let immediate): return immediate
         case .selectI32Eq(let immediate): return immediate
         case .selectI32LtS(let immediate): return immediate
         case .selectI32LtU(let immediate): return immediate
@@ -5108,6 +5178,8 @@ extension Instruction {
         case .copyStackAccToSlot(let immediate): immediate.emit(to: emit)
         case .selectAcc(let immediate): immediate.emit(to: emit)
         case .copyStack2(let immediate): immediate.emit(to: emit)
+        case .copyStack3(let immediate): immediate.emit(to: emit)
+        case .copyStack4(let immediate): immediate.emit(to: emit)
         case .selectI32Eq(let immediate): immediate.emit(to: emit)
         case .selectI32LtS(let immediate): immediate.emit(to: emit)
         case .selectI32LtU(let immediate): immediate.emit(to: emit)
@@ -5852,59 +5924,61 @@ extension Instruction {
         case .copyStackAccToSlot: return 693
         case .selectAcc: return 694
         case .copyStack2: return 695
-        case .selectI32Eq: return 696
-        case .selectI32LtS: return 697
-        case .selectI32LtU: return 698
-        case .selectI32EqImm: return 699
-        case .selectI32LtSImm: return 700
-        case .selectI32LtUImm: return 701
-        case .selectI32GtSImm: return 702
-        case .selectI32GtUImm: return 703
-        case .selectI64Eq: return 704
-        case .selectI64LtS: return 705
-        case .selectI64LtU: return 706
-        case .selectI64EqImm: return 707
-        case .selectI64LtSImm: return 708
-        case .selectI64LtUImm: return 709
-        case .selectI64GtSImm: return 710
-        case .selectI64GtUImm: return 711
-        case .i32LoadWithCopy: return 712
-        case .i64LoadWithCopy: return 713
-        case .f32LoadWithCopy: return 714
-        case .f64LoadWithCopy: return 715
-        case .i32Load8SWithCopy: return 716
-        case .i32Load8UWithCopy: return 717
-        case .i32Load16SWithCopy: return 718
-        case .i32Load16UWithCopy: return 719
-        case .i64Load8SWithCopy: return 720
-        case .i64Load8UWithCopy: return 721
-        case .i64Load16SWithCopy: return 722
-        case .i64Load16UWithCopy: return 723
-        case .i64Load32SWithCopy: return 724
-        case .i64Load32UWithCopy: return 725
-        case .consumeFuel: return 726
-        case .outOfFuelTrap: return 727
-        case .checkEpoch: return 728
-        case .epochDeadlineTrap: return 729
-        case .callRef: return 730
-        case .returnCallRef: return 731
-        case .refAsNonNull: return 732
-        case .brIfNull: return 733
-        case .brIfNotNull: return 734
-        case .selectMemory: return 735
-        default: return 736  // .selectSharedMemory
+        case .copyStack3: return 696
+        case .copyStack4: return 697
+        case .selectI32Eq: return 698
+        case .selectI32LtS: return 699
+        case .selectI32LtU: return 700
+        case .selectI32EqImm: return 701
+        case .selectI32LtSImm: return 702
+        case .selectI32LtUImm: return 703
+        case .selectI32GtSImm: return 704
+        case .selectI32GtUImm: return 705
+        case .selectI64Eq: return 706
+        case .selectI64LtS: return 707
+        case .selectI64LtU: return 708
+        case .selectI64EqImm: return 709
+        case .selectI64LtSImm: return 710
+        case .selectI64LtUImm: return 711
+        case .selectI64GtSImm: return 712
+        case .selectI64GtUImm: return 713
+        case .i32LoadWithCopy: return 714
+        case .i64LoadWithCopy: return 715
+        case .f32LoadWithCopy: return 716
+        case .f64LoadWithCopy: return 717
+        case .i32Load8SWithCopy: return 718
+        case .i32Load8UWithCopy: return 719
+        case .i32Load16SWithCopy: return 720
+        case .i32Load16UWithCopy: return 721
+        case .i64Load8SWithCopy: return 722
+        case .i64Load8UWithCopy: return 723
+        case .i64Load16SWithCopy: return 724
+        case .i64Load16UWithCopy: return 725
+        case .i64Load32SWithCopy: return 726
+        case .i64Load32UWithCopy: return 727
+        case .consumeFuel: return 728
+        case .outOfFuelTrap: return 729
+        case .checkEpoch: return 730
+        case .epochDeadlineTrap: return 731
+        case .callRef: return 732
+        case .returnCallRef: return 733
+        case .refAsNonNull: return 734
+        case .brIfNull: return 735
+        case .brIfNotNull: return 736
+        case .selectMemory: return 737
+        default: return 738  // .selectSharedMemory
         }
     }
 }
 extension Instruction {
     /// The number of opcodes, trap pseudo-instructions included.
-    static let opcodeCount = 737
+    static let opcodeCount = 739
 
     /// Whether only the direct-threaded dispatcher implements this instruction;
     /// `Execution.doExecute` has no case for it.
     var isDirectThreadedOnly: Bool {
         switch opcodeID {
-        case 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388, 389, 390, 391, 392, 393, 394, 395, 396, 397, 398, 399, 400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 418, 419, 420, 421, 422, 423, 424, 425, 426, 427, 428, 429, 430, 431, 432, 433, 434, 435, 436, 437, 438, 439, 440, 441, 442, 443, 444, 445, 446, 447, 448, 449, 450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 460, 461, 462, 463, 464, 465, 466, 467, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477, 478, 479, 480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506, 507, 508, 509, 510, 511, 512, 513, 514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550, 551, 552, 553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 593, 594, 595, 596, 597, 598, 599, 600, 601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611, 612, 613, 614, 615, 616, 617, 618, 619, 620, 621, 622, 623, 624, 625, 626, 627, 628, 629, 630, 631, 632, 633, 634, 635, 636, 637, 638, 639, 640, 641, 642, 643, 644, 645, 646, 647, 648, 649, 650, 651, 652, 653, 654, 655, 656, 657, 658, 659, 660, 661, 662, 663, 664, 665, 666, 667, 668, 669, 670, 671, 672, 673, 674, 675, 676, 677, 678, 679, 680, 681, 682, 683, 684, 685, 686, 687, 688, 689, 690, 691, 692, 693, 694, 695, 696, 697, 698, 699, 700, 701, 702, 703, 704, 705, 706, 707, 708, 709, 710, 711: return true
+        case 365, 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388, 389, 390, 391, 392, 393, 394, 395, 396, 397, 398, 399, 400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 418, 419, 420, 421, 422, 423, 424, 425, 426, 427, 428, 429, 430, 431, 432, 433, 434, 435, 436, 437, 438, 439, 440, 441, 442, 443, 444, 445, 446, 447, 448, 449, 450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 460, 461, 462, 463, 464, 465, 466, 467, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477, 478, 479, 480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506, 507, 508, 509, 510, 511, 512, 513, 514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550, 551, 552, 553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 593, 594, 595, 596, 597, 598, 599, 600, 601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611, 612, 613, 614, 615, 616, 617, 618, 619, 620, 621, 622, 623, 624, 625, 626, 627, 628, 629, 630, 631, 632, 633, 634, 635, 636, 637, 638, 639, 640, 641, 642, 643, 644, 645, 646, 647, 648, 649, 650, 651, 652, 653, 654, 655, 656, 657, 658, 659, 660, 661, 662, 663, 664, 665, 666, 667, 668, 669, 670, 671, 672, 673, 674, 675, 676, 677, 678, 679, 680, 681, 682, 683, 684, 685, 686, 687, 688, 689, 690, 691, 692, 693, 694, 695, 696, 697, 698, 699, 700, 701, 702, 703, 704, 705, 706, 707, 708, 709, 710, 711, 712, 713: return true
         default: return false
         }
     }
@@ -6617,47 +6691,49 @@ extension Instruction {
         case 693: return .copyStackAccToSlot(Instruction.CopyStackAccToSlotOperand.load(from: &pc))
         case 694: return .selectAcc(Instruction.SelectAccOperand.load(from: &pc))
         case 695: return .copyStack2(Instruction.CopyStack2Operand.load(from: &pc))
-        case 696: return .selectI32Eq(Instruction.SelectCmpOperand.load(from: &pc))
-        case 697: return .selectI32LtS(Instruction.SelectCmpOperand.load(from: &pc))
-        case 698: return .selectI32LtU(Instruction.SelectCmpOperand.load(from: &pc))
-        case 699: return .selectI32EqImm(Instruction.SelectCmpImmOperand.load(from: &pc))
-        case 700: return .selectI32LtSImm(Instruction.SelectCmpImmOperand.load(from: &pc))
-        case 701: return .selectI32LtUImm(Instruction.SelectCmpImmOperand.load(from: &pc))
-        case 702: return .selectI32GtSImm(Instruction.SelectCmpImmOperand.load(from: &pc))
-        case 703: return .selectI32GtUImm(Instruction.SelectCmpImmOperand.load(from: &pc))
-        case 704: return .selectI64Eq(Instruction.SelectCmpOperand.load(from: &pc))
-        case 705: return .selectI64LtS(Instruction.SelectCmpOperand.load(from: &pc))
-        case 706: return .selectI64LtU(Instruction.SelectCmpOperand.load(from: &pc))
-        case 707: return .selectI64EqImm(Instruction.SelectCmpImmOperand.load(from: &pc))
-        case 708: return .selectI64LtSImm(Instruction.SelectCmpImmOperand.load(from: &pc))
-        case 709: return .selectI64LtUImm(Instruction.SelectCmpImmOperand.load(from: &pc))
-        case 710: return .selectI64GtSImm(Instruction.SelectCmpImmOperand.load(from: &pc))
-        case 711: return .selectI64GtUImm(Instruction.SelectCmpImmOperand.load(from: &pc))
-        case 712: return .i32LoadWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
-        case 713: return .i64LoadWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
-        case 714: return .f32LoadWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
-        case 715: return .f64LoadWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
-        case 716: return .i32Load8SWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
-        case 717: return .i32Load8UWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
-        case 718: return .i32Load16SWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
-        case 719: return .i32Load16UWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
-        case 720: return .i64Load8SWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
-        case 721: return .i64Load8UWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
-        case 722: return .i64Load16SWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
-        case 723: return .i64Load16UWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
-        case 724: return .i64Load32SWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
-        case 725: return .i64Load32UWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
-        case 726: return .consumeFuel(Instruction.ConsumeFuelOperand.load(from: &pc))
-        case 727: return .outOfFuelTrap(NoOperand())
-        case 728: return .checkEpoch(NoOperand())
-        case 729: return .epochDeadlineTrap(NoOperand())
-        case 730: return .callRef(Instruction.CallRefOperand.load(from: &pc))
-        case 731: return .returnCallRef(Instruction.ReturnCallRefOperand.load(from: &pc))
-        case 732: return .refAsNonNull(Instruction.RefAsNonNullOperand.load(from: &pc))
-        case 733: return .brIfNull(Instruction.BrIfOperand.load(from: &pc))
-        case 734: return .brIfNotNull(Instruction.BrIfOperand.load(from: &pc))
-        case 735: return .selectMemory(Instruction.SelectMemoryOperand.load(from: &pc))
-        case 736: return .selectSharedMemory(Instruction.SelectSharedMemoryOperand.load(from: &pc))
+        case 696: return .copyStack3(Instruction.CopyStack3Operand.load(from: &pc))
+        case 697: return .copyStack4(Instruction.CopyStack4Operand.load(from: &pc))
+        case 698: return .selectI32Eq(Instruction.SelectCmpOperand.load(from: &pc))
+        case 699: return .selectI32LtS(Instruction.SelectCmpOperand.load(from: &pc))
+        case 700: return .selectI32LtU(Instruction.SelectCmpOperand.load(from: &pc))
+        case 701: return .selectI32EqImm(Instruction.SelectCmpImmOperand.load(from: &pc))
+        case 702: return .selectI32LtSImm(Instruction.SelectCmpImmOperand.load(from: &pc))
+        case 703: return .selectI32LtUImm(Instruction.SelectCmpImmOperand.load(from: &pc))
+        case 704: return .selectI32GtSImm(Instruction.SelectCmpImmOperand.load(from: &pc))
+        case 705: return .selectI32GtUImm(Instruction.SelectCmpImmOperand.load(from: &pc))
+        case 706: return .selectI64Eq(Instruction.SelectCmpOperand.load(from: &pc))
+        case 707: return .selectI64LtS(Instruction.SelectCmpOperand.load(from: &pc))
+        case 708: return .selectI64LtU(Instruction.SelectCmpOperand.load(from: &pc))
+        case 709: return .selectI64EqImm(Instruction.SelectCmpImmOperand.load(from: &pc))
+        case 710: return .selectI64LtSImm(Instruction.SelectCmpImmOperand.load(from: &pc))
+        case 711: return .selectI64LtUImm(Instruction.SelectCmpImmOperand.load(from: &pc))
+        case 712: return .selectI64GtSImm(Instruction.SelectCmpImmOperand.load(from: &pc))
+        case 713: return .selectI64GtUImm(Instruction.SelectCmpImmOperand.load(from: &pc))
+        case 714: return .i32LoadWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 715: return .i64LoadWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 716: return .f32LoadWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 717: return .f64LoadWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 718: return .i32Load8SWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 719: return .i32Load8UWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 720: return .i32Load16SWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 721: return .i32Load16UWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 722: return .i64Load8SWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 723: return .i64Load8UWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 724: return .i64Load16SWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 725: return .i64Load16UWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 726: return .i64Load32SWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 727: return .i64Load32UWithCopy(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 728: return .consumeFuel(Instruction.ConsumeFuelOperand.load(from: &pc))
+        case 729: return .outOfFuelTrap(NoOperand())
+        case 730: return .checkEpoch(NoOperand())
+        case 731: return .epochDeadlineTrap(NoOperand())
+        case 732: return .callRef(Instruction.CallRefOperand.load(from: &pc))
+        case 733: return .returnCallRef(Instruction.ReturnCallRefOperand.load(from: &pc))
+        case 734: return .refAsNonNull(Instruction.RefAsNonNullOperand.load(from: &pc))
+        case 735: return .brIfNull(Instruction.BrIfOperand.load(from: &pc))
+        case 736: return .brIfNotNull(Instruction.BrIfOperand.load(from: &pc))
+        case 737: return .selectMemory(Instruction.SelectMemoryOperand.load(from: &pc))
+        case 738: return .selectSharedMemory(Instruction.SelectSharedMemoryOperand.load(from: &pc))
         default: fatalError("Unknown instruction opcode: \(opcode)")
         }
     }
@@ -7368,47 +7444,49 @@ extension Instruction {
         case 693: return "copyStackAccToSlot"
         case 694: return "selectAcc"
         case 695: return "copyStack2"
-        case 696: return "selectI32Eq"
-        case 697: return "selectI32LtS"
-        case 698: return "selectI32LtU"
-        case 699: return "selectI32EqImm"
-        case 700: return "selectI32LtSImm"
-        case 701: return "selectI32LtUImm"
-        case 702: return "selectI32GtSImm"
-        case 703: return "selectI32GtUImm"
-        case 704: return "selectI64Eq"
-        case 705: return "selectI64LtS"
-        case 706: return "selectI64LtU"
-        case 707: return "selectI64EqImm"
-        case 708: return "selectI64LtSImm"
-        case 709: return "selectI64LtUImm"
-        case 710: return "selectI64GtSImm"
-        case 711: return "selectI64GtUImm"
-        case 712: return "i32LoadWithCopy"
-        case 713: return "i64LoadWithCopy"
-        case 714: return "f32LoadWithCopy"
-        case 715: return "f64LoadWithCopy"
-        case 716: return "i32Load8SWithCopy"
-        case 717: return "i32Load8UWithCopy"
-        case 718: return "i32Load16SWithCopy"
-        case 719: return "i32Load16UWithCopy"
-        case 720: return "i64Load8SWithCopy"
-        case 721: return "i64Load8UWithCopy"
-        case 722: return "i64Load16SWithCopy"
-        case 723: return "i64Load16UWithCopy"
-        case 724: return "i64Load32SWithCopy"
-        case 725: return "i64Load32UWithCopy"
-        case 726: return "consumeFuel"
-        case 727: return "outOfFuelTrap"
-        case 728: return "checkEpoch"
-        case 729: return "epochDeadlineTrap"
-        case 730: return "callRef"
-        case 731: return "returnCallRef"
-        case 732: return "refAsNonNull"
-        case 733: return "brIfNull"
-        case 734: return "brIfNotNull"
-        case 735: return "selectMemory"
-        case 736: return "selectSharedMemory"
+        case 696: return "copyStack3"
+        case 697: return "copyStack4"
+        case 698: return "selectI32Eq"
+        case 699: return "selectI32LtS"
+        case 700: return "selectI32LtU"
+        case 701: return "selectI32EqImm"
+        case 702: return "selectI32LtSImm"
+        case 703: return "selectI32LtUImm"
+        case 704: return "selectI32GtSImm"
+        case 705: return "selectI32GtUImm"
+        case 706: return "selectI64Eq"
+        case 707: return "selectI64LtS"
+        case 708: return "selectI64LtU"
+        case 709: return "selectI64EqImm"
+        case 710: return "selectI64LtSImm"
+        case 711: return "selectI64LtUImm"
+        case 712: return "selectI64GtSImm"
+        case 713: return "selectI64GtUImm"
+        case 714: return "i32LoadWithCopy"
+        case 715: return "i64LoadWithCopy"
+        case 716: return "f32LoadWithCopy"
+        case 717: return "f64LoadWithCopy"
+        case 718: return "i32Load8SWithCopy"
+        case 719: return "i32Load8UWithCopy"
+        case 720: return "i32Load16SWithCopy"
+        case 721: return "i32Load16UWithCopy"
+        case 722: return "i64Load8SWithCopy"
+        case 723: return "i64Load8UWithCopy"
+        case 724: return "i64Load16SWithCopy"
+        case 725: return "i64Load16UWithCopy"
+        case 726: return "i64Load32SWithCopy"
+        case 727: return "i64Load32UWithCopy"
+        case 728: return "consumeFuel"
+        case 729: return "outOfFuelTrap"
+        case 730: return "checkEpoch"
+        case 731: return "epochDeadlineTrap"
+        case 732: return "callRef"
+        case 733: return "returnCallRef"
+        case 734: return "refAsNonNull"
+        case 735: return "brIfNull"
+        case 736: return "brIfNotNull"
+        case 737: return "selectMemory"
+        case 738: return "selectSharedMemory"
         default: fatalError("Unknown instruction index: \(opcode)")
         }
     }

@@ -419,36 +419,36 @@ extension Execution {
         case 362: return self.execute_i64XorMul(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 363: return self.execute_i64XorShrU(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 364: return self.execute_i32MulSubRev(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 712: return try self.executeToken_i32LoadWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 713: return try self.executeToken_i64LoadWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        // f32LoadWithCopy shares i32LoadWithCopy's handler body; see Instruction.handlerIdentity
         case 714: return try self.executeToken_i32LoadWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        // f64LoadWithCopy shares i64LoadWithCopy's handler body; see Instruction.handlerIdentity
         case 715: return try self.executeToken_i64LoadWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 716: return try self.executeToken_i32Load8SWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 717: return try self.executeToken_i32Load8UWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 718: return try self.executeToken_i32Load16SWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 719: return try self.executeToken_i32Load16UWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 720: return try self.executeToken_i64Load8SWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        // f32LoadWithCopy shares i32LoadWithCopy's handler body; see Instruction.handlerIdentity
+        case 716: return try self.executeToken_i32LoadWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        // f64LoadWithCopy shares i64LoadWithCopy's handler body; see Instruction.handlerIdentity
+        case 717: return try self.executeToken_i64LoadWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 718: return try self.executeToken_i32Load8SWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 719: return try self.executeToken_i32Load8UWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 720: return try self.executeToken_i32Load16SWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 721: return try self.executeToken_i32Load16UWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 722: return try self.executeToken_i64Load8SWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
         // i64Load8UWithCopy shares i32Load8UWithCopy's handler body; see Instruction.handlerIdentity
-        case 721: return try self.executeToken_i32Load8UWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 722: return try self.executeToken_i64Load16SWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 723: return try self.executeToken_i32Load8UWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 724: return try self.executeToken_i64Load16SWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
         // i64Load16UWithCopy shares i32Load16UWithCopy's handler body; see Instruction.handlerIdentity
-        case 723: return try self.executeToken_i32Load16UWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 724: return try self.executeToken_i64Load32SWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 725: return try self.executeToken_i32Load16UWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 726: return try self.executeToken_i64Load32SWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
         // i64Load32UWithCopy shares i32LoadWithCopy's handler body; see Instruction.handlerIdentity
-        case 725: return try self.executeToken_i32LoadWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 726: return try self.executeToken_consumeFuel(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 727: return try self.execute_outOfFuelTrap(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 728: return try self.executeToken_checkEpoch(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 729: return try self.execute_epochDeadlineTrap(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 730: return try self.execute_callRef(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 731: return try self.execute_returnCallRef(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 732: return try self.execute_refAsNonNull(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 733: return self.execute_brIfNull(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 734: return self.execute_brIfNotNull(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 735: return self.execute_selectMemory(sp: &sp, pc: &pc, md: &md, ms: &ms)
-        case 736: return self.execute_selectSharedMemory(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 727: return try self.executeToken_i32LoadWithCopy(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 728: return try self.executeToken_consumeFuel(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 729: return try self.execute_outOfFuelTrap(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 730: return try self.executeToken_checkEpoch(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 731: return try self.execute_epochDeadlineTrap(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 732: return try self.execute_callRef(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 733: return try self.execute_returnCallRef(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 734: return try self.execute_refAsNonNull(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 735: return self.execute_brIfNull(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 736: return self.execute_brIfNotNull(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 737: return self.execute_selectMemory(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 738: return self.execute_selectSharedMemory(sp: &sp, pc: &pc, md: &md, ms: &ms)
         default: preconditionFailure("Unknown instruction!?")
 
         }
@@ -6870,6 +6870,22 @@ extension Execution {
         self.copyStack2(sp: sp.pointee, immediate: immediate)
         return next
     }
+    @_silgen_name("wasmkit_execute_copyStack3") @inline(__always)
+    mutating func execute_copyStack3(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.CopyStack3Operand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        self.copyStack3(sp: sp.pointee, immediate: immediate)
+        return next
+    }
+    @_silgen_name("wasmkit_execute_copyStack4") @inline(__always)
+    mutating func execute_copyStack4(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.CopyStack4Operand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        self.copyStack4(sp: sp.pointee, immediate: immediate)
+        return next
+    }
     @_silgen_name("wasmkit_execute_selectI32Eq") @inline(__always)
     mutating func execute_selectI32Eq(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
         let immediate = Instruction.SelectCmpOperand.load(from: &pc.pointee)
@@ -7300,7 +7316,7 @@ extension Instruction {
             #if !(arch(i386) || arch(x86_64) || arch(arm) || arch(arm64) || arch(arm64_32))
             fatalError("Direct threading is not supported on this platform")
             #else
-            return CodeSlot(wasmkit_tc_exec_handlers.727)
+            return CodeSlot(wasmkit_tc_exec_handlers.729)
             #endif
         }
         /// The direct-threaded head slot of the `epochDeadlineTrap` pseudo-instruction.
@@ -7313,7 +7329,7 @@ extension Instruction {
             #if !(arch(i386) || arch(x86_64) || arch(arm) || arch(arm64) || arch(arm64_32))
             fatalError("Direct threading is not supported on this platform")
             #else
-            return CodeSlot(wasmkit_tc_exec_handlers.729)
+            return CodeSlot(wasmkit_tc_exec_handlers.731)
             #endif
         }
 }

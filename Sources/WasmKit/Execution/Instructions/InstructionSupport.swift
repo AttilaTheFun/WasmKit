@@ -608,6 +608,10 @@ extension Instruction {
                 target.write("\(reg(op.dest)) = copy \(reg(op.source))")
             case .copyStack2(let op):
                 target.write("\(reg(op.dest0)) = copy \(reg(op.source0)); \(reg(op.dest1)) = copy \(reg(op.source1))")
+            case .copyStack3(let op):
+                target.write("\(reg(op.dest0)) = copy \(reg(op.source0)); \(reg(op.dest1)) = copy \(reg(op.source1)); \(reg(op.dest2)) = copy \(reg(op.source2))")
+            case .copyStack4(let op):
+                target.write("\(reg(op.dest0)) = copy \(reg(op.source0)); \(reg(op.dest1)) = copy \(reg(op.source1)); \(reg(op.dest2)) = copy \(reg(op.source2)); \(reg(op.dest3)) = copy \(reg(op.source3))")
             case .i32LoadWithCopy(let op): loadWithCopy("i32.load", op)
             case .i64LoadWithCopy(let op): loadWithCopy("i64.load", op)
             case .f32LoadWithCopy(let op): loadWithCopy("f32.load", op)

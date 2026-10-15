@@ -1783,6 +1783,19 @@ extension VMGen {
         }
         copyStack2.isDirectThreadedOnly = true
         instructions += [copyStack2]
+        for count in [3, 4] {
+            var copy = Instruction(
+                name: "copyStack\(count)",
+                documentation: "Independent register copies with all sources read before writes"
+            ) { immediate in
+                for index in 0..<count {
+                    immediate.field(name: "source\(index)", type: .VReg)
+                    immediate.field(name: "dest\(index)", type: .VReg)
+                }
+            }
+            copy.isDirectThreadedOnly = true
+            instructions.append(copy)
+        }
         instructions += selectCmpInsts
         instructions += memoryLoadOps.map(\.withCopyInstruction)
         var consumeFuel = Instruction(
