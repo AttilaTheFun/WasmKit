@@ -1,5 +1,14 @@
 // Fused compare+branch and branch forms that read the integer accumulator.
 extension Execution {
+    @inline(__always)
+    mutating func i32AddImmBrIf(sp: Sp, pc: Pc, ireg: inout UInt64, immediate: Instruction.I32AddImmBrIfOperand) -> (Pc, CodeSlot) {
+        let result = sp[i32: immediate.lhs] &+ UInt32(bitPattern: immediate.imm)
+        sp[i32: immediate.result] = result
+        ireg = UInt64(result)
+        guard _fastPath(result != 0) else { return pc.next() }
+        return pc.advanced(by: Int(immediate.offset)).next()
+    }
+
     /// Fused `i32.eq` + `br_if` whose left operand is the accumulator.
     @inline(__always)
     mutating func brIfI32EqAcc(sp: Sp, pc: Pc, ireg: UInt64, immediate: Instruction.BrIfAccCmpOperand) -> (Pc, CodeSlot) {
