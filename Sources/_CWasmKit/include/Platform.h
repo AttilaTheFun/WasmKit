@@ -27,7 +27,7 @@
 // How a handler reaches the next one: the calling convention that makes the
 // dispatch a jump rather than a call.
 //
-// `swiftasynccall` is the default where it exists, and additionally keeps
+// `swiftasynccall` is the fallback where it exists, and additionally keeps
 // `state` in the async context register. It is documented to guarantee tail
 // calls and on some targets does not honour that: on armv7em the dispatch
 // compiles to `blx`, a real call, so the native stack grows by a frame for
@@ -36,13 +36,17 @@
 // call the compiler cannot turn into a jump is an error rather than a silent
 // call -- at the cost of passing `state` as an ordinary argument.
 //
-// Select one with -DWASMKIT_TC_USE=swiftasynccc or -DWASMKIT_TC_USE=musttail.
+// On supported 64-bit ARM hosts, preserve_none gives the dispatch chain its own
+// register convention while the ordinary C entry wrapper preserves its caller.
+// Every handler-to-handler edge is still an enforced tail call.
+// Select with -DWASMKIT_TC_USE=swiftasynccc, musttail, or preserve_none.
 // Asking for one that this compiler and target cannot provide is an error:
 // quietly falling back is how the armv7em breakage went unnoticed.
 #define WASMKIT_TC_CAT_(a, b) a##b
 #define WASMKIT_TC_CAT(a, b) WASMKIT_TC_CAT_(a, b)
 #define WASMKIT_TC_OPTION_swiftasynccc 1
 #define WASMKIT_TC_OPTION_musttail 2
+#define WASMKIT_TC_OPTION_preserve_none 3
 
 #if defined(__clang__) && __has_attribute(musttail)
 #  define WASMKIT_HAS_MUSTTAIL 1
@@ -50,15 +54,25 @@
 #  define WASMKIT_HAS_MUSTTAIL 0
 #endif
 
+#if defined(__clang__) && defined(__aarch64__) && defined(__LP64__) && !defined(__wasi__) && __has_attribute(preserve_none) && WASMKIT_HAS_MUSTTAIL
+#  define WASMKIT_HAS_PRESERVE_NONE 1
+#else
+#  define WASMKIT_HAS_PRESERVE_NONE 0
+#endif
+
 #if defined(WASMKIT_TC_USE)
 #  define WASMKIT_TC_CHOICE WASMKIT_TC_CAT(WASMKIT_TC_OPTION_, WASMKIT_TC_USE)
 #  if WASMKIT_TC_CHOICE == 0
-#    error "WASMKIT_TC_USE must be swiftasynccc or musttail"
+#    error "WASMKIT_TC_USE must be swiftasynccc, musttail, or preserve_none"
+#  elif WASMKIT_TC_CHOICE == WASMKIT_TC_OPTION_preserve_none && !WASMKIT_HAS_PRESERVE_NONE
+#    error "WASMKIT_TC_USE=preserve_none requires a supported 64-bit ARM compiler with musttail"
 #  elif WASMKIT_TC_CHOICE == WASMKIT_TC_OPTION_swiftasynccc && !WASMKIT_HAS_SWIFTASYNCCC
 #    error "WASMKIT_TC_USE=swiftasynccc, but this compiler does not offer swiftasynccall"
 #  elif WASMKIT_TC_CHOICE == WASMKIT_TC_OPTION_musttail && !WASMKIT_HAS_MUSTTAIL
 #    error "WASMKIT_TC_USE=musttail, but this compiler does not offer the musttail attribute"
 #  endif
+#elif WASMKIT_HAS_PRESERVE_NONE
+#  define WASMKIT_TC_CHOICE WASMKIT_TC_OPTION_preserve_none
 #elif WASMKIT_HAS_SWIFTASYNCCC
 #  define WASMKIT_TC_CHOICE WASMKIT_TC_OPTION_swiftasynccc
 #else
@@ -80,7 +94,11 @@
 #  define WASMKIT_USE_DIRECT_THREADED_CODE 0
 #endif
 
-#if WASMKIT_TC_CHOICE == WASMKIT_TC_OPTION_musttail
+#if WASMKIT_TC_CHOICE == WASMKIT_TC_OPTION_preserve_none
+#  define WASMKIT_TC_CC __attribute__((preserve_none))
+#  define WASMKIT_TC_CONTEXT
+#  define WASMKIT_TC_MUSTTAIL __attribute__((musttail))
+#elif WASMKIT_TC_CHOICE == WASMKIT_TC_OPTION_musttail
 // The plain C convention, so `state` is an ordinary argument rather than the
 // async context register, and an enforced tail call.
 #  define WASMKIT_TC_CC
