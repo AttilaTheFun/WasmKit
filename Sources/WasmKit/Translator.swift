@@ -4113,7 +4113,7 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             if module.isSameInstance(wasm.instance) {
                 let call = Instruction.CallOperand(callee: callee, arguments: arguments, spAddend: spAddend)
                 if !module.isDebuggable, let copy = iseqBuilder.returnCopy {
-                    if let prefix = iseqBuilder.callCopyPrefix {
+                    if let prefix = iseqBuilder.callCopyPrefix, case .returnCopy = copy.instruction {
                         let p = prefix.operand
                         let prefixed: Instruction?
                         switch copy.instruction {

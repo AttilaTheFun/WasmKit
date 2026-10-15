@@ -50,7 +50,7 @@ import WAT
             var listing = ""
             try instance.dumpFunctions(to: &listing, module: module)
             #expect(listing.contains("compilingCopy3Call"))
-            #expect(listing.contains("compilingCopy4Call"))
+            #expect(!listing.contains("compilingCopy4Call"))
         }
         #endif
     }
