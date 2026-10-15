@@ -146,8 +146,21 @@ extension Execution {
         let (iseq, function) = immediate.callee.assumeCompiled()
         let newSp = sp.advanced(by: immediate.spAddend)
         guard pushSmallFrame(iseq: iseq, function: function, sp: sp, newSp: newSp, returnPC: pc) else {
-            // Revisit the same two-slot operand with the slow handler. No guest
+            // Revisit the same two-slot operand with the medium-frame handler. No guest
             // state changed, including the caller frame used for trap backtraces.
+            return (pc.advanced(by: -2), store.value.engine.internalCallMediumSlot)
+        }
+        sp = newSp
+        return iseq.baseAddress.next()
+    }
+
+    /// Keep medium image copies out of the small-call handler, while avoiding
+    /// a throwing/native-copy path for frames up to 512 bytes.
+    @inline(__always)
+    mutating func internalCallMedium(sp: inout Sp, pc: Pc, immediate: Instruction.CallOperand) -> (Pc, CodeSlot) {
+        let (iseq, function) = immediate.callee.assumeCompiled()
+        let newSp = sp.advanced(by: immediate.spAddend)
+        guard pushMediumFrame(iseq: iseq, function: function, sp: sp, newSp: newSp, returnPC: pc) else {
             return (pc.advanced(by: -2), store.value.engine.internalCallSlowSlot)
         }
         sp = newSp

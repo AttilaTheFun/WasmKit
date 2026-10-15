@@ -195,6 +195,42 @@ struct Execution: ~Copyable {
         return true
     }
 
+    @inline(__always)
+    private static func copy128(_ dst: UnsafeMutableRawPointer, _ src: UnsafeRawPointer, _ o: Int) {
+        copy64(dst, src, o)
+        copy64(dst, src, o &+ 64)
+    }
+
+    @inline(__always)
+    private static func copy256(_ dst: UnsafeMutableRawPointer, _ src: UnsafeRawPointer, _ o: Int) {
+        copy128(dst, src, o)
+        copy128(dst, src, o &+ 128)
+    }
+
+    /// A second leaf fast path for images too large for pushSmallFrame.
+    /// Failure preserves the entire frame for the throwing slow handler.
+    @inline(__always)
+    func pushMediumFrame(iseq: InstructionSequence, function: EntityHandle<WasmFunctionEntity>,
+                         sp: Sp, newSp: Sp, returnPC: Pc) -> Bool {
+        let savedSlots = -StackLayout.numberOfSavingSlots * MemoryLayout<UntypedValue>.stride
+        let offset = iseq.frameInitOffset
+        guard offset < savedSlots - 128, offset >= savedSlots - 512,
+              _fastPath(newSp.advanced(by: iseq.maxStackHeight) < stackEnd) else { return false }
+        let dst = UnsafeMutableRawPointer(newSp)
+        let src = iseq.frameInitAnchor
+        if offset < savedSlots - 256 {
+            Self.copy256(dst, src, offset)
+            Self.copy256(dst, src, savedSlots - 256)
+        } else {
+            Self.copy128(dst, src, offset)
+            Self.copy128(dst, src, savedSlots - 128)
+        }
+        newSp.previousSP = sp
+        newSp.setReturnPC(returnPC, needsMemoryRestore: false)
+        newSp.currentFunction = function
+        return true
+    }
+
     /// Pushes a new call frame to the VM stack.
     ///
     /// - Parameter needsMemoryRestoreOnReturn: whether returning from this frame

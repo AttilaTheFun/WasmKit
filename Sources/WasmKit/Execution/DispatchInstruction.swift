@@ -463,6 +463,7 @@ extension Execution {
         case 748: return self.execute_internalCopyCall(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 749: return try self.execute_compilingCopy2Call(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 750: return self.execute_internalCopy2Call(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 751: return self.execute_internalCallMedium(sp: &sp, pc: &pc, md: &md, ms: &ms)
         default: preconditionFailure("Unknown instruction!?")
 
         }
@@ -7357,6 +7358,13 @@ sp.pointee[i64: immediate.result] = mixed &* sp.pointee[i64: immediate.multiplie
         let immediate = Instruction.Copy2CallOperand.load(from: &pc.pointee)
         let next: CodeSlot
         (pc.pointee, next) = self.internalCopy2Call(sp: &sp.pointee, pc: pc.pointee, immediate: immediate)
+        return next
+    }
+    @_silgen_name("wasmkit_execute_internalCallMedium") @inline(__always)
+    mutating func execute_internalCallMedium(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.CallOperand.load(from: &pc.pointee)
+        let next: CodeSlot
+        (pc.pointee, next) = self.internalCallMedium(sp: &sp.pointee, pc: pc.pointee, immediate: immediate)
         return next
     }
 }
