@@ -688,6 +688,14 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             self.slotHeight += type.stackSlotCount
             maxSlotHeight = max(maxSlotHeight, slotHeight)
         }
+        /// Constants not yet materialized into physical stack slots.
+        var liveConstants: [UntypedValue] {
+            values.compactMap {
+                guard case .const(_, let value) = $0 else { return nil }
+                return value
+            }
+        }
+
         mutating func preserveLocalsOnStack(_ localIndex: LocalIndex) -> [(to: VReg, type: ValueType)] {
             var copyTo: [(to: VReg, type: ValueType)] = []
             for i in 0..<values.count {
@@ -2570,6 +2578,18 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             guard reserved.count < stackLayout.constantSlotSize else { return false }
             reserved.insert(value)
             return true
+        }
+
+        var hasUnallocatedReservations: Bool { reserved.count > values.count }
+
+        /// Run only between Wasm operators, when no popped ValueSource is in
+        /// flight. Allocated slots stay valid forever; pending stack constants
+        /// retain their reservations. Immediate-only and dropped constants can
+        /// release theirs. Producer fusions reserve again before allocating.
+        mutating func reclaimUnusedReservations(keepingLive live: [UntypedValue]) {
+            reserved = Set(values)
+            reserved.formUnion(live)
+            assert(reserved.count <= stackLayout.constantSlotSize)
         }
 
         /// The slot of a reserved constant, assigned on first use.
@@ -5236,7 +5256,12 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         // register, as a constant-pool slot. When the pool cannot take another
         // constant, it is written to its stack slot here instead.
         let value = UntypedValue(value)
-        if constantSlots.reserve(value) {
+        var reserved = constantSlots.reserve(value)
+        if !reserved, constantSlots.hasUnallocatedReservations {
+            constantSlots.reclaimUnusedReservations(keepingLive: valueStack.liveConstants)
+            reserved = constantSlots.reserve(value)
+        }
+        if reserved {
             valueStack.pushConst(value, type: type)
             iseqBuilder.dropResultRelink()
             return
