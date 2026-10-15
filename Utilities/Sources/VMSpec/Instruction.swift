@@ -1945,6 +1945,16 @@ extension VMGen {
             $0.field(name: "shift0", type: .UInt16)
             $0.field(name: "shift1", type: .UInt16)
         })
+        var loadPair = Instruction(name: "i32LoadMemory32Pair", documentation: "Two ordered i32 loads retaining both register writes", useCurrentMemory: .read) {
+            $0.field(name: "pointer0", type: .VReg)
+            $0.field(name: "result0", type: .VReg)
+            $0.field(name: "offset0", type: .UInt32)
+            $0.field(name: "pointer1", type: .VReg)
+            $0.field(name: "result1", type: .VReg)
+            $0.field(name: "offset1", type: .UInt32)
+        }
+        loadPair.mayDispatchToTrap = true
+        instructions.append(loadPair)
         return instructions
     }
 

@@ -465,6 +465,7 @@ extension Execution {
         case 750: return self.execute_internalCopy2Call(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 751: return self.execute_i64XorShiftReturn(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 752: return self.execute_i64XorShiftMulPair(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 753: return try self.executeToken_i32LoadMemory32Pair(sp: &sp, pc: &pc, md: &md, ms: &ms)
         default: preconditionFailure("Unknown instruction!?")
 
         }
@@ -1298,6 +1299,17 @@ extension Execution {
     mutating func executeToken_i32LoadMemory32(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) throws -> CodeSlot {
         let immediate = Instruction.AccMemoryPointerResultOperand.load(from: &pc.pointee)
         if let trap = self.memoryLoad32(sp: sp.pointee, md: md.pointee, ms: ms.pointee, immediate: immediate) { try trap.raise() }
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        return next
+    }
+    @inline(__always)
+    mutating func executeToken_i32LoadMemory32Pair(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) throws -> CodeSlot {
+        let immediate = Instruction.I32LoadMemory32PairOperand.load(from: &pc.pointee)
+        if let trap = self.memoryLoad32(sp: sp.pointee, md: md.pointee, ms: ms.pointee,
+    immediate: .init(pointer: immediate.pointer0, result: immediate.result0, offset: immediate.offset0)) { try trap.raise() }
+if let trap = self.memoryLoad32(sp: sp.pointee, md: md.pointee, ms: ms.pointee,
+    immediate: .init(pointer: immediate.pointer1, result: immediate.result1, offset: immediate.offset1)) { try trap.raise() }
         let next = pc.pointee.pointee
         pc.pointee = pc.pointee.advanced(by: 1)
         return next
@@ -7377,6 +7389,17 @@ sp.pointee[i64: immediate.result] = mixed &* sp.pointee[i64: immediate.multiplie
 let first = (input ^ (input &>> UInt64(immediate.shift0))) &* sp.pointee[i64: immediate.multiplier0]
 sp.pointee[i64: immediate.intermediate] = first
 sp.pointee[i64: immediate.result] = (first ^ (first &>> UInt64(immediate.shift1))) &* sp.pointee[i64: immediate.multiplier1]
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32LoadMemory32Pair") @inline(__always)
+    mutating func execute_i32LoadMemory32Pair(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.I32LoadMemory32PairOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        if let trap = self.memoryLoad32(sp: sp.pointee, md: md.pointee, ms: ms.pointee,
+    immediate: .init(pointer: immediate.pointer0, result: immediate.result0, offset: immediate.offset0)) { return trap.directThreadedHeadSlot }
+if let trap = self.memoryLoad32(sp: sp.pointee, md: md.pointee, ms: ms.pointee,
+    immediate: .init(pointer: immediate.pointer1, result: immediate.result1, offset: immediate.offset1)) { return trap.directThreadedHeadSlot }
         return next
     }
 }

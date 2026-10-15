@@ -125,6 +125,12 @@ enum VMGen {
         inlineImpls["i32LoadMemory32"] = """
             if let trap = self.memoryLoad32(sp: sp.pointee, md: md.pointee, ms: ms.pointee, immediate: immediate) { %TRAP% }
             """
+        inlineImpls["i32LoadMemory32Pair"] = """
+            if let trap = self.memoryLoad32(sp: sp.pointee, md: md.pointee, ms: ms.pointee,
+                immediate: .init(pointer: immediate.pointer0, result: immediate.result0, offset: immediate.offset0)) { %TRAP% }
+            if let trap = self.memoryLoad32(sp: sp.pointee, md: md.pointee, ms: ms.pointee,
+                immediate: .init(pointer: immediate.pointer1, result: immediate.result1, offset: immediate.offset1)) { %TRAP% }
+            """
         inlineImpls["i32AddImmLoad"] = """
             if let trap = self.memoryLoadAddingImmediate(sp: sp.pointee, md: md.pointee, ms: ms.pointee, immediate: immediate) { %TRAP% }
             """

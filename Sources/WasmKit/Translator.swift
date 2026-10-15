@@ -2046,6 +2046,12 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         private var copyAfterAcc: (producer: AccProducer, source: VReg, dest: VReg, end: MetaProgramCounter)?
         /// Retained across temporary emissions that a later peephole may rewind.
         /// Adjacency and label checks are required before consuming this record.
+        private var lastLoad32: (operand: Instruction.AccMemoryPointerResultOperand, position: MetaProgramCounter, end: MetaProgramCounter)?
+        fileprivate var adjacentLoad32: (operand: Instruction.AccMemoryPointerResultOperand, position: MetaProgramCounter)? {
+            guard let prior = lastLoad32, prior.end.offsetFromHead == insertingPC.offsetFromHead,
+                canRewind(to: prior.position) else { return nil }
+            return (prior.operand, prior.position)
+        }
         private var lastXorMultiply: (operand: Instruction.I64XorShiftMulImmOperand, position: MetaProgramCounter, end: MetaProgramCounter)?
         fileprivate func xorMultiply(before position: MetaProgramCounter, input: VReg) -> (operand: Instruction.I64XorShiftMulImmOperand, position: MetaProgramCounter)? {
             guard let prior = lastXorMultiply, prior.end.offsetFromHead == position.offsetFromHead,
@@ -2267,6 +2273,7 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             if let prior = lastXorMultiply, prior.end.offsetFromHead > position.offsetFromHead {
                 lastXorMultiply = nil
             }
+            if let prior = lastLoad32, prior.end.offsetFromHead > position.offsetFromHead { lastLoad32 = nil }
             instructions.removeLast(instructions.count - position.offsetFromHead)
             resetLastEmission()
             lastAccAndSlot = nil
@@ -2334,6 +2341,11 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             lastXorReturnProducer = nil
             let newInstruction = resultRelink(newResult)
             assign(at: lastEmission.position.offsetFromHead, newInstruction)
+            if let prior = lastLoad32, prior.position.offsetFromHead == lastEmission.position.offsetFromHead {
+                if case .i32LoadMemory32(let operand) = newInstruction {
+                    lastLoad32 = (operand, prior.position, prior.end)
+                } else { lastLoad32 = nil }
+            }
             if let prior = lastXorMultiply, prior.position.offsetFromHead == lastEmission.position.offsetFromHead {
                 if case .i64XorShiftMulImm(let operand) = newInstruction {
                     lastXorMultiply = (operand, prior.position, prior.end)
@@ -2378,6 +2390,9 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             var slots: [CodeSlot] = []
             instruction.emitImmediate(to: { slots.append($0) })
             for slot in slots { emitSlot(slot) }
+            if case .i32LoadMemory32(let operand) = instruction {
+                lastLoad32 = (operand, position, insertingPC)
+            } else { lastLoad32 = nil }
             if case .i64XorShiftMulImm(let operand) = instruction {
                 lastXorMultiply = (operand, position, insertingPC)
             }
@@ -4857,6 +4872,18 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             self.rewindInstructionMapping(to: copy.position)
             let make = { (result: VReg) in
                 withCopy(Instruction.LoadWithCopyOperand(pointer: copy.source, result: result, offset: offset, copyDest: pointer))
+            }
+            emit(make(result), resultRelink: { newResult in make(newResult) })
+            return
+        }
+        if load == .i32Load, iseqBuilder.emitsDirectOnlyInstructions, !module.isDebuggable,
+            let prior = iseqBuilder.adjacentLoad32 {
+            iseqBuilder.rewind(to: prior.position)
+            rewindInstructionMapping(to: prior.position)
+            let make = { (result: VReg) in
+                Instruction.i32LoadMemory32Pair(.init(
+                    pointer0: prior.operand.pointer, result0: prior.operand.result, offset0: prior.operand.offset,
+                    pointer1: pointer, result1: result, offset1: offset))
             }
             emit(make(result), resultRelink: { newResult in make(newResult) })
             return
