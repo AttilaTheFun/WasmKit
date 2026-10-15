@@ -1930,6 +1930,7 @@ extension VMGen {
         instructions.append(Instruction(name: "internalCopyCall", documentation: "Copy argument slots and call an internal function", isControl: true, mayUpdateFrame: true, immediateLayout: .copyCall))
         instructions.append(Instruction(name: "compilingCopy2Call", documentation: "Copy argument slots and call an internal function", isControl: true, mayThrow: true, mayUpdateFrame: true, immediateLayout: .copy2Call))
         instructions.append(Instruction(name: "internalCopy2Call", documentation: "Copy argument slots and call an internal function", isControl: true, mayUpdateFrame: true, immediateLayout: .copy2Call))
+        instructions.append(Instruction(name: "i32AddImmGlobalSetReturn", documentation: "Add an immediate, write a register and global, and return", isControl: true, mayUpdateFrame: true, useCurrentMemory: .write, immediate: "I32AddImmGlobalSetOperand"))
         return instructions
     }
 

@@ -2044,6 +2044,13 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         /// the accumulator on untouched once fused with a following write of
         /// the producer's result.
         private var copyAfterAcc: (producer: AccProducer, source: VReg, dest: VReg, end: MetaProgramCounter)?
+        /// A final global update eligible to share the return dispatch.
+        private var lastGlobalReturn: (operand: Instruction.I32AddImmGlobalSetOperand, position: MetaProgramCounter, end: MetaProgramCounter)?
+        fileprivate var globalReturn: (operand: Instruction.I32AddImmGlobalSetOperand, position: MetaProgramCounter)? {
+            guard let update = lastGlobalReturn, update.end.offsetFromHead == insertingPC.offsetFromHead,
+                canRewind(to: update.position) else { return nil }
+            return (update.operand, update.position)
+        }
         /// The last emitted single copy, for pairing it with the next one.
         private var lastReturnCopy: (instruction: Instruction, position: MetaProgramCounter, end: MetaProgramCounter)?
         fileprivate var returnCopy: (instruction: Instruction, position: MetaProgramCounter)? {
@@ -2255,6 +2262,7 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             copyAfterAcc = nil
             lastCopy = nil
             lastReturnCopy = nil
+            lastGlobalReturn = nil
             xorShift = nil
         }
 
@@ -2351,6 +2359,11 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             var slots: [CodeSlot] = []
             instruction.emitImmediate(to: { slots.append($0) })
             for slot in slots { emitSlot(slot) }
+            if case .i32AddImmGlobalSet(let operand) = instruction {
+                lastGlobalReturn = (operand, position, insertingPC)
+            } else {
+                lastGlobalReturn = nil
+            }
             switch instruction {
             case .copyStack(let operand): lastReturnCopy = (.returnCopy(operand), position, insertingPC)
             case .copyStack2(let operand): lastReturnCopy = (.returnCopy2(operand), position, insertingPC)
@@ -3111,7 +3124,11 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         return emittedCopy
     }
     private mutating func emitReturnInstruction() {
-        if !module.isDebuggable, let copy = iseqBuilder.returnCopy {
+        if !module.isDebuggable, let update = iseqBuilder.globalReturn {
+            iseqBuilder.rewind(to: update.position)
+            rewindInstructionMapping(to: update.position)
+            emit(.i32AddImmGlobalSetReturn(update.operand))
+        } else if !module.isDebuggable, let copy = iseqBuilder.returnCopy {
             iseqBuilder.rewind(to: copy.position)
             rewindInstructionMapping(to: copy.position)
             emit(copy.instruction)

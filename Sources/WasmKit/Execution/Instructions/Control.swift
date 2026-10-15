@@ -78,6 +78,16 @@ extension Execution {
     }
 
     @inline(__always)
+    mutating func i32AddImmGlobalSetReturn(sp: inout Sp, pc: Pc, md: inout Md, ms: inout Ms, immediate: Instruction.I32AddImmGlobalSetOperand) -> (Pc, CodeSlot) {
+        let value = sp[i32: immediate.lhs] &+ UInt32(bitPattern: immediate.imm)
+        sp[i32: immediate.result] = value
+        InternalGlobal(bitPattern: UInt(immediate.rawGlobal)).unsafelyUnwrapped.withValue {
+            $0.rawStorage.lo = UInt64(value)
+        }
+        return _return(sp: &sp, pc: pc, md: &md, ms: &ms)
+    }
+
+    @inline(__always)
     mutating func returnCopy(sp: inout Sp, pc: Pc, md: inout Md, ms: inout Ms, immediate: Instruction.CopyStackOperand) -> (Pc, CodeSlot) {
         sp[immediate.dest] = sp[immediate.source]
         return _return(sp: &sp, pc: pc, md: &md, ms: &ms)

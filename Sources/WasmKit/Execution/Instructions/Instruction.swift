@@ -2442,6 +2442,8 @@ enum Instruction {
     case compilingCopy2Call(Instruction.Copy2CallOperand)
     /// Copy argument slots and call an internal function
     case internalCopy2Call(Instruction.Copy2CallOperand)
+    /// Add an immediate, write a register and global, and return
+    case i32AddImmGlobalSetReturn(Instruction.I32AddImmGlobalSetOperand)
 }
 
 extension Instruction {
@@ -4603,6 +4605,7 @@ extension Instruction {
         case .internalCopyCall(let immediate): return immediate
         case .compilingCopy2Call(let immediate): return immediate
         case .internalCopy2Call(let immediate): return immediate
+        case .i32AddImmGlobalSetReturn(let immediate): return immediate
         default: return nil
         }
     }
@@ -5351,6 +5354,7 @@ extension Instruction {
         case .internalCopyCall(let immediate): immediate.emit(to: emit)
         case .compilingCopy2Call(let immediate): immediate.emit(to: emit)
         case .internalCopy2Call(let immediate): immediate.emit(to: emit)
+        case .i32AddImmGlobalSetReturn(let immediate): immediate.emit(to: emit)
         default: return
         }
     }
@@ -6111,13 +6115,14 @@ extension Instruction {
         case .compilingCopyCall: return 747
         case .internalCopyCall: return 748
         case .compilingCopy2Call: return 749
-        default: return 750  // .internalCopy2Call
+        case .internalCopy2Call: return 750
+        default: return 751  // .i32AddImmGlobalSetReturn
         }
     }
 }
 extension Instruction {
     /// The number of opcodes, trap pseudo-instructions included.
-    static let opcodeCount = 751
+    static let opcodeCount = 752
 
     /// Whether only the direct-threaded dispatcher implements this instruction;
     /// `Execution.doExecute` has no case for it.
@@ -6891,6 +6896,7 @@ extension Instruction {
         case 748: return .internalCopyCall(Instruction.CopyCallOperand.load(from: &pc))
         case 749: return .compilingCopy2Call(Instruction.Copy2CallOperand.load(from: &pc))
         case 750: return .internalCopy2Call(Instruction.Copy2CallOperand.load(from: &pc))
+        case 751: return .i32AddImmGlobalSetReturn(Instruction.I32AddImmGlobalSetOperand.load(from: &pc))
         default: fatalError("Unknown instruction opcode: \(opcode)")
         }
     }
@@ -7656,6 +7662,7 @@ extension Instruction {
         case 748: return "internalCopyCall"
         case 749: return "compilingCopy2Call"
         case 750: return "internalCopy2Call"
+        case 751: return "i32AddImmGlobalSetReturn"
         default: fatalError("Unknown instruction index: \(opcode)")
         }
     }
