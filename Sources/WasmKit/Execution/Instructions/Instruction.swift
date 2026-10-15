@@ -2422,6 +2422,10 @@ enum Instruction {
     case i64XorShiftMulImm(Instruction.I64XorShiftMulImmOperand)
     /// Add an immediate and store the result in a register and a global
     case i32AddImmGlobalSet(Instruction.I32AddImmGlobalSetOperand)
+    /// Read a global, add a register, and write both destinations
+    case i32GlobalAddSet(Instruction.I32GlobalAddSetOperand)
+    /// Read a global, subtract a register, and write both destinations
+    case i32GlobalSubSet(Instruction.I32GlobalAddSetOperand)
 }
 
 extension Instruction {
@@ -3759,6 +3763,29 @@ extension Instruction {
             emitSlot { unsafeBitCast(($0.result, $0.lhs, $0.imm) as (VReg, VReg, Int32), to: CodeSlot.self) }
         }
     }
+
+    struct I32GlobalAddSetOperand: InstructionImmediate {
+        var rawGlobal: UInt64
+        var result: VReg
+        var rhs: VReg
+        @inline(__always) static func load(from pc: inout Pc) -> Self {
+            #if _endian(little)
+                let rawGlobal = pc.read(UInt64.self)
+                let word1 = pc.read(UInt64.self)
+                let result = VReg(byteOffset: Int16(truncatingIfNeeded: word1))
+                let rhs = VReg(byteOffset: Int16(truncatingIfNeeded: word1 >> 16))
+                return Self(rawGlobal: rawGlobal, result: result, rhs: rhs)
+            #else
+                let (rawGlobal) = pc.read((UInt64).self)
+                let (result, rhs, _, _, _, _) = pc.read((VReg, VReg, UInt8, UInt8, UInt8, UInt8).self)
+                return Self(rawGlobal: rawGlobal, result: result, rhs: rhs)
+            #endif
+        }
+        @inline(__always) static func emit(to emitSlot: ((Self) -> CodeSlot) -> Void) {
+            emitSlot { $0.rawGlobal }
+            emitSlot { unsafeBitCast(($0.result, $0.rhs, 0, 0, 0, 0) as (VReg, VReg, UInt8, UInt8, UInt8, UInt8), to: CodeSlot.self) }
+        }
+    }
 }
 
 extension Instruction {
@@ -4493,6 +4520,8 @@ extension Instruction {
         case .i64XorShiftImm(let immediate): return immediate
         case .i64XorShiftMulImm(let immediate): return immediate
         case .i32AddImmGlobalSet(let immediate): return immediate
+        case .i32GlobalAddSet(let immediate): return immediate
+        case .i32GlobalSubSet(let immediate): return immediate
         default: return nil
         }
     }
@@ -5231,6 +5260,8 @@ extension Instruction {
         case .i64XorShiftImm(let immediate): immediate.emit(to: emit)
         case .i64XorShiftMulImm(let immediate): immediate.emit(to: emit)
         case .i32AddImmGlobalSet(let immediate): immediate.emit(to: emit)
+        case .i32GlobalAddSet(let immediate): immediate.emit(to: emit)
+        case .i32GlobalSubSet(let immediate): immediate.emit(to: emit)
         default: return
         }
     }
@@ -5981,13 +6012,15 @@ extension Instruction {
         case .selectSharedMemory: return 737
         case .i64XorShiftImm: return 738
         case .i64XorShiftMulImm: return 739
-        default: return 740  // .i32AddImmGlobalSet
+        case .i32AddImmGlobalSet: return 740
+        case .i32GlobalAddSet: return 741
+        default: return 742  // .i32GlobalSubSet
         }
     }
 }
 extension Instruction {
     /// The number of opcodes, trap pseudo-instructions included.
-    static let opcodeCount = 741
+    static let opcodeCount = 743
 
     /// Whether only the direct-threaded dispatcher implements this instruction;
     /// `Execution.doExecute` has no case for it.
@@ -6751,6 +6784,8 @@ extension Instruction {
         case 738: return .i64XorShiftImm(Instruction.I64XorShiftImmOperand.load(from: &pc))
         case 739: return .i64XorShiftMulImm(Instruction.I64XorShiftMulImmOperand.load(from: &pc))
         case 740: return .i32AddImmGlobalSet(Instruction.I32AddImmGlobalSetOperand.load(from: &pc))
+        case 741: return .i32GlobalAddSet(Instruction.I32GlobalAddSetOperand.load(from: &pc))
+        case 742: return .i32GlobalSubSet(Instruction.I32GlobalAddSetOperand.load(from: &pc))
         default: fatalError("Unknown instruction opcode: \(opcode)")
         }
     }
@@ -7506,6 +7541,8 @@ extension Instruction {
         case 738: return "i64XorShiftImm"
         case 739: return "i64XorShiftMulImm"
         case 740: return "i32AddImmGlobalSet"
+        case 741: return "i32GlobalAddSet"
+        case 742: return "i32GlobalSubSet"
         default: fatalError("Unknown instruction index: \(opcode)")
         }
     }
