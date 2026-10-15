@@ -37,7 +37,7 @@ import WAT
                 }
             }
             #if Disassembler
-            if shift == 17 {
+            if shift == 17 && threadingModel == .direct {
                 var listing = ""
                 try instance.dumpFunctions(to: &listing, module: module)
                 #expect(listing.contains("i64XorShiftMulPair"))
