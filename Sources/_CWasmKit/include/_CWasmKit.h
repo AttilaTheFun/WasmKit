@@ -47,6 +47,15 @@ static inline _Bool wasmkit_atomic_cmpxchg_##WIDTH( \
     return __atomic_compare_exchange_n( \
         (CTYPE *)ptr, expected, desired, 0, \
         __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST); \
+} \
+/* Return the observed value directly, matching WebAssembly's cmpxchg result. */ \
+static inline CTYPE wasmkit_atomic_cmpxchg_value_##WIDTH( \
+    void *WASMKIT_NONNULL ptr, CTYPE expected, CTYPE desired \
+) { \
+    __atomic_compare_exchange_n( \
+        (CTYPE *)ptr, &expected, desired, 0, \
+        __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST); \
+    return expected; \
 }
 
 WASMKIT_DEFINE_ATOMICS(8,  uint8_t)
