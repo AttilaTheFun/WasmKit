@@ -559,6 +559,30 @@ extension Execution {
         return nil
     }
 
+    mutating func i32AtomicCmpxchgRetry(sp: Sp, md: Md, ms: Ms, immediate: Instruction.I32AtomicCmpxchgRetryOperand) -> MemoryAccessTrap? {
+        let address = UInt64(sp[i32: immediate.pointer])
+        if _slowPath(address % 4 != 0) { return .unalignedAtomic }
+        if _slowPath(address + 4 > UInt64(ms)) { return .outOfBounds }
+        let pointer = md.unsafelyUnwrapped.advanced(by: Execution.checkedByteOffset(address))
+        while true {
+            let expected = sp[i32: immediate.expected]
+            var observed = expected
+            _ = wasmkit_atomic_cmpxchg_32(pointer, &observed, sp[i32: immediate.replacement])
+            sp[i32: immediate.observed] = observed
+            if observed == expected {
+                sp[i32: immediate.result] = 1
+                return nil
+            }
+            sp[i32: immediate.expected] = observed
+            let replacement = observed &+ UInt32(bitPattern: immediate.delta)
+            sp[i32: immediate.replacement] = replacement
+            if Int32(bitPattern: replacement) < 0 {
+                sp[i32: immediate.result] = 0
+                return nil
+            }
+        }
+    }
+
     // MARK: - Atomic Wait/Notify
 
     /// The parking lot for `atomic.wait`/`notify` on the current memory, the one

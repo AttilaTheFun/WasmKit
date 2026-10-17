@@ -3337,6 +3337,41 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         #endif
     }
 
+    private var retryExpression: ArraySlice<UInt8> = []
+    private var retryExpressionOffset: Int = 0
+    private var retryEnds: [Int: LabelRef] = [:]
+
+    private mutating func emitAtomicRetryIfMatched() throws(WasmKitError) {
+        guard !isIntercepting, !module.isDebuggable,
+            !engineConfiguration.fuelMetering, !engineConfiguration.epochInterruption,
+            let pattern = AtomicRetryPattern.match(retryExpression,
+                at: retryExpression.startIndex + binaryOffset - retryExpressionOffset),
+            try !module.isMemory64(memoryIndex: 0) else { return }
+        let target = try controlStack.branchTarget(relativeDepth: pattern.successDepth)
+        guard case .block(root: false) = target.kind, target.copySlotCount == 0,
+            target.valueStackHeight == valueStack.valueHeight,
+            controlStack.catchHandlersToUnwind(relativeDepth: pattern.successDepth) == 0 else { return }
+        for index in [pattern.pointer, pattern.expected, pattern.replacement, pattern.observed] {
+            guard try locals.type(of: index) == .i32, !stackLayout.isWideLocal(index) else { return }
+        }
+        let result = valueStack.push(.i32)
+        _ = try valueStack.pop(.i32)
+        emit(.i32AtomicCmpxchgRetry(.init(
+            pointer: stackLayout.localReg(pattern.pointer), expected: stackLayout.localReg(pattern.expected),
+            replacement: stackLayout.localReg(pattern.replacement), observed: stackLayout.localReg(pattern.observed),
+            delta: pattern.delta, result: result)))
+        let fail = iseqBuilder.allocLabel()
+        let oldPC = iseqBuilder.insertingPC
+        iseqBuilder.emitWithLabel(Instruction.brIf, target.continuation) { _, pc, continuation in
+            .init(condition: LVReg(result), offset: Int32(continuation.offsetFromHead - pc.offsetFromHead))
+        }
+        iseqBuilder.emitWithLabel(Instruction.br, fail) { _, pc, continuation in
+            Int32(continuation.offsetFromHead - pc.offsetFromHead)
+        }
+        updateInstructionMapping(from: oldPC)
+        retryEnds[retryExpressionOffset + pattern.end - retryExpression.startIndex] = fail
+    }
+
     // MARK: Main entry point
 
     /// Translate a Wasm expression into a sequence of instructions.
@@ -3350,6 +3385,8 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         emitEpochCheck()
         openFuelRegion()
         var parser = ExpressionParser(code: code)
+        retryExpression = code.expression
+        retryExpressionOffset = parser.offset
         while let visit = try WasmKitError.wrap({ () throws(WasmParserError) in try parser.parse() }) {
             chargeFuelForOperator()
             guard !reachedFunctionEnd else {
@@ -3361,6 +3398,9 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             }
             do throws(WasmKitError) {
                 try visit(visitor: &self)
+                if let label = retryEnds.removeValue(forKey: binaryOffset) {
+                    try iseqBuilder.pinLabelHere(label)
+                }
             } catch {
                 var errorWithOffset = error
                 if errorWithOffset.location == nil {
@@ -3429,6 +3469,7 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         // iteration passes both. This is what bounds a guest that loops without ever calling out.
         emitEpochCheck()
         openFuelRegion()
+        try emitAtomicRetryIfMatched()
     }
 
     mutating func visitIf(blockType: WasmParser.BlockType) throws(WasmKitError) -> Output {

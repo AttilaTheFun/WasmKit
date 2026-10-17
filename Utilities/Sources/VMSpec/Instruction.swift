@@ -1966,6 +1966,16 @@ extension VMGen {
         addBranch.useIreg = .write
         instructions.append(addBranch)
         instructions.append(Instruction(name: "internalCopy2ArithmeticCall", documentation: "Copy two arguments and execute an exact two-instruction arithmetic callee", isControl: true, mayUpdateFrame: true, useCurrentMemory: .write, immediateLayout: .copy2Call))
+        var retry = Instruction(name: "i32AtomicCmpxchgRetry", documentation: "Run a compare-exchange retry loop with a signed retry guard", useCurrentMemory: .read) {
+            $0.field(name: "pointer", type: .VReg)
+            $0.field(name: "expected", type: .VReg)
+            $0.field(name: "replacement", type: .VReg)
+            $0.field(name: "observed", type: .VReg)
+            $0.field(name: "delta", type: .Int32)
+            $0.field(name: "result", type: .VReg)
+        }
+        retry.mayDispatchToTrap = true
+        instructions.append(retry)
         return instructions
     }
 
