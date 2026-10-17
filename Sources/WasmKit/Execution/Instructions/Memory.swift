@@ -155,6 +155,9 @@ extension Execution {
     // Accumulator forms of the loads and stores, for a 32-bit memory. A guest
     // address taken from the accumulator is the zero-extended `i32` an earlier
     // instruction produced, exactly as its frame slot would have held it.
+    // Both address and static offset are UInt32. Their sum plus any scalar
+    // access width fits UInt64, so one end-address comparison is sufficient.
+    // The general helpers above retain overflow checks for memory64.
 
     /// `ireg = load(sp[pointer] + offset)`
     mutating func memoryLoadToAcc<T: FixedWidthInteger>(
@@ -163,8 +166,8 @@ extension Execution {
     ) -> MemoryAccessTrap? {
         let length = UInt64(T.bitWidth) / 8
         let offset = UInt64(loadOperand.offset)
-        let address = Execution.memoryAddress(offset: offset, index: sp[loadOperand.pointer].asAddressOffset())
-        if _slowPath(!Execution.isInBounds(address: address, offset: offset, length: length, ms: ms)) {
+        let address = offset &+ UInt64(sp[i32: loadOperand.pointer])
+        if _slowPath(address &+ length > UInt64(ms)) {
             return .outOfBounds
         }
         let loaded = md.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Execution.checkedByteOffset(address), as: T.self)
@@ -179,8 +182,8 @@ extension Execution {
     ) -> MemoryAccessTrap? {
         let length = UInt64(T.bitWidth) / 8
         let offset = UInt64(loadOperand.offset)
-        let address = Execution.memoryAddress(offset: offset, index: sp[loadOperand.pointer].asAddressOffset())
-        if _slowPath(!Execution.isInBounds(address: address, offset: offset, length: length, ms: ms)) {
+        let address = offset &+ UInt64(sp[i32: loadOperand.pointer])
+        if _slowPath(address &+ length > UInt64(ms)) {
             return .outOfBounds
         }
         let loaded = md.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Execution.checkedByteOffset(address), as: T.self)
@@ -200,8 +203,8 @@ extension Execution {
         let offset = UInt64(loadOperand.offset)
         let pointer = sp[loadOperand.pointer]
         sp[loadOperand.copyDest] = pointer
-        let address = Execution.memoryAddress(offset: offset, index: pointer.asAddressOffset())
-        if _slowPath(!Execution.isInBounds(address: address, offset: offset, length: length, ms: ms)) {
+        let address = offset &+ UInt64(pointer.i32)
+        if _slowPath(address &+ length > UInt64(ms)) {
             return .outOfBounds
         }
         let loaded = md.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Execution.checkedByteOffset(address), as: T.self)
@@ -216,8 +219,8 @@ extension Execution {
     ) -> MemoryAccessTrap? {
         let length = UInt64(T.bitWidth) / 8
         let offset = UInt64(loadOperand.offset)
-        let address = Execution.memoryAddress(offset: offset, index: ireg)
-        if _slowPath(!Execution.isInBounds(address: address, offset: offset, length: length, ms: ms)) {
+        let address = offset &+ UInt64(UInt32(truncatingIfNeeded: ireg))
+        if _slowPath(address &+ length > UInt64(ms)) {
             return .outOfBounds
         }
         let loaded = md.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Execution.checkedByteOffset(address), as: T.self)
@@ -232,8 +235,8 @@ extension Execution {
     ) -> MemoryAccessTrap? {
         let length = UInt64(T.bitWidth) / 8
         let offset = UInt64(loadOperand.offset)
-        let address = Execution.memoryAddress(offset: offset, index: ireg)
-        if _slowPath(!Execution.isInBounds(address: address, offset: offset, length: length, ms: ms)) {
+        let address = offset &+ UInt64(UInt32(truncatingIfNeeded: ireg))
+        if _slowPath(address &+ length > UInt64(ms)) {
             return .outOfBounds
         }
         let loaded = md.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Execution.checkedByteOffset(address), as: T.self)
@@ -248,8 +251,8 @@ extension Execution {
     ) -> MemoryAccessTrap? {
         let length = UInt64(T.bitWidth) / 8
         let offset = UInt64(storeOperand.offset)
-        let address = Execution.memoryAddress(offset: offset, index: sp[storeOperand.pointer].asAddressOffset())
-        if _slowPath(!Execution.isInBounds(address: address, offset: offset, length: length, ms: ms)) {
+        let address = offset &+ UInt64(sp[i32: storeOperand.pointer])
+        if _slowPath(address &+ length > UInt64(ms)) {
             return .outOfBounds
         }
         let toStore = castFromValue(UntypedValue(storage: ireg))
@@ -266,8 +269,8 @@ extension Execution {
         let value = sp[storeOperand.value]
         let length = UInt64(T.bitWidth) / 8
         let offset = UInt64(storeOperand.offset)
-        let address = Execution.memoryAddress(offset: offset, index: ireg)
-        if _slowPath(!Execution.isInBounds(address: address, offset: offset, length: length, ms: ms)) {
+        let address = offset &+ UInt64(UInt32(truncatingIfNeeded: ireg))
+        if _slowPath(address &+ length > UInt64(ms)) {
             return .outOfBounds
         }
         let toStore = castFromValue(value)
@@ -281,8 +284,8 @@ extension Execution {
         sp: Sp, md: Md, ms: Ms, freg: inout Double, loadOperand: Instruction.AccMemoryPointerOperand
     ) -> MemoryAccessTrap? {
         let offset = UInt64(loadOperand.offset)
-        let address = Execution.memoryAddress(offset: offset, index: sp[loadOperand.pointer].asAddressOffset())
-        if _slowPath(!Execution.isInBounds(address: address, offset: offset, length: 8, ms: ms)) {
+        let address = offset &+ UInt64(sp[i32: loadOperand.pointer])
+        if _slowPath(address &+ 8 > UInt64(ms)) {
             return .outOfBounds
         }
         freg = Double(bitPattern: md.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Execution.checkedByteOffset(address), as: UInt64.self))
@@ -294,8 +297,8 @@ extension Execution {
         md: Md, ms: Ms, ireg: UInt64, freg: inout Double, loadOperand: Instruction.AccMemoryOffsetOperand
     ) -> MemoryAccessTrap? {
         let offset = UInt64(loadOperand.offset)
-        let address = Execution.memoryAddress(offset: offset, index: ireg)
-        if _slowPath(!Execution.isInBounds(address: address, offset: offset, length: 8, ms: ms)) {
+        let address = offset &+ UInt64(UInt32(truncatingIfNeeded: ireg))
+        if _slowPath(address &+ 8 > UInt64(ms)) {
             return .outOfBounds
         }
         freg = Double(bitPattern: md.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Execution.checkedByteOffset(address), as: UInt64.self))
@@ -307,8 +310,8 @@ extension Execution {
         sp: Sp, md: Md, ms: Ms, freg: Double, storeOperand: Instruction.AccMemoryPointerOperand
     ) -> MemoryAccessTrap? {
         let offset = UInt64(storeOperand.offset)
-        let address = Execution.memoryAddress(offset: offset, index: sp[storeOperand.pointer].asAddressOffset())
-        if _slowPath(!Execution.isInBounds(address: address, offset: offset, length: 8, ms: ms)) {
+        let address = offset &+ UInt64(sp[i32: storeOperand.pointer])
+        if _slowPath(address &+ 8 > UInt64(ms)) {
             return .outOfBounds
         }
         md.unsafelyUnwrapped.advanced(by: Execution.checkedByteOffset(address))
