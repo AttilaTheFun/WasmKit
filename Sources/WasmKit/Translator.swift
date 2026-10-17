@@ -47,9 +47,12 @@ class ISeqAllocator {
 
     func allocateInstructions(capacity: Int) -> UnsafeMutableBufferPointer<UInt64> {
         assert(_isPOD(Instruction.self), "Instruction must be POD")
-        let buffer = UnsafeMutableBufferPointer<UInt64>.allocate(capacity: capacity)
-        self.buffers.append(UnsafeMutableRawBufferPointer(buffer))
-        return buffer
+        // Keep function instruction streams at a stable cache-line offset.
+        // Their operands and dispatch heads are read together by the interpreter.
+        let storage = UnsafeMutableRawBufferPointer.allocate(
+            byteCount: capacity * MemoryLayout<UInt64>.stride, alignment: 128)
+        self.buffers.append(storage)
+        return storage.bindMemory(to: UInt64.self)
     }
 
     deinit {
