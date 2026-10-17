@@ -2452,6 +2452,180 @@ enum Instruction {
     case i32AddImmBrIf(Instruction.I32AddImmBrIfOperand)
     /// Copy two arguments and execute an exact two-instruction arithmetic callee
     case internalCopy2ArithmeticCall(Instruction.Copy2CallOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32LoadGuarded(Instruction.LoadOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32LoadToAccGuarded(Instruction.AccMemoryPointerOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32LoadFromAccGuarded(Instruction.AccMemoryResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32LoadInAccGuarded(Instruction.AccMemoryOffsetOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32LoadToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32LoadWithCopyGuarded(Instruction.LoadWithCopyOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64LoadGuarded(Instruction.LoadOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64LoadToAccGuarded(Instruction.AccMemoryPointerOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64LoadFromAccGuarded(Instruction.AccMemoryResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64LoadInAccGuarded(Instruction.AccMemoryOffsetOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64LoadToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64LoadWithCopyGuarded(Instruction.LoadWithCopyOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case f32LoadGuarded(Instruction.LoadOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case f32LoadToAccGuarded(Instruction.AccMemoryPointerOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case f32LoadFromAccGuarded(Instruction.AccMemoryResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case f32LoadInAccGuarded(Instruction.AccMemoryOffsetOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case f32LoadToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case f32LoadWithCopyGuarded(Instruction.LoadWithCopyOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case f64LoadGuarded(Instruction.LoadOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case f64LoadToAccGuarded(Instruction.AccMemoryPointerOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case f64LoadFromAccGuarded(Instruction.AccMemoryResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case f64LoadInAccGuarded(Instruction.AccMemoryOffsetOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case f64LoadToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case f64LoadWithCopyGuarded(Instruction.LoadWithCopyOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load8SGuarded(Instruction.LoadOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load8SToAccGuarded(Instruction.AccMemoryPointerOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load8SFromAccGuarded(Instruction.AccMemoryResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load8SInAccGuarded(Instruction.AccMemoryOffsetOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load8SToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load8SWithCopyGuarded(Instruction.LoadWithCopyOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load8UGuarded(Instruction.LoadOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load8UToAccGuarded(Instruction.AccMemoryPointerOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load8UFromAccGuarded(Instruction.AccMemoryResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load8UInAccGuarded(Instruction.AccMemoryOffsetOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load8UToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load8UWithCopyGuarded(Instruction.LoadWithCopyOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load16SGuarded(Instruction.LoadOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load16SToAccGuarded(Instruction.AccMemoryPointerOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load16SFromAccGuarded(Instruction.AccMemoryResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load16SInAccGuarded(Instruction.AccMemoryOffsetOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load16SToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load16SWithCopyGuarded(Instruction.LoadWithCopyOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load16UGuarded(Instruction.LoadOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load16UToAccGuarded(Instruction.AccMemoryPointerOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load16UFromAccGuarded(Instruction.AccMemoryResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load16UInAccGuarded(Instruction.AccMemoryOffsetOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load16UToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32Load16UWithCopyGuarded(Instruction.LoadWithCopyOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load8SGuarded(Instruction.LoadOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load8SToAccGuarded(Instruction.AccMemoryPointerOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load8SFromAccGuarded(Instruction.AccMemoryResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load8SInAccGuarded(Instruction.AccMemoryOffsetOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load8SToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load8SWithCopyGuarded(Instruction.LoadWithCopyOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load8UGuarded(Instruction.LoadOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load8UToAccGuarded(Instruction.AccMemoryPointerOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load8UFromAccGuarded(Instruction.AccMemoryResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load8UInAccGuarded(Instruction.AccMemoryOffsetOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load8UToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load8UWithCopyGuarded(Instruction.LoadWithCopyOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load16SGuarded(Instruction.LoadOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load16SToAccGuarded(Instruction.AccMemoryPointerOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load16SFromAccGuarded(Instruction.AccMemoryResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load16SInAccGuarded(Instruction.AccMemoryOffsetOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load16SToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load16SWithCopyGuarded(Instruction.LoadWithCopyOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load16UGuarded(Instruction.LoadOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load16UToAccGuarded(Instruction.AccMemoryPointerOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load16UFromAccGuarded(Instruction.AccMemoryResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load16UInAccGuarded(Instruction.AccMemoryOffsetOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load16UToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load16UWithCopyGuarded(Instruction.LoadWithCopyOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load32SGuarded(Instruction.LoadOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load32SToAccGuarded(Instruction.AccMemoryPointerOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load32SFromAccGuarded(Instruction.AccMemoryResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load32SInAccGuarded(Instruction.AccMemoryOffsetOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load32SToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load32SWithCopyGuarded(Instruction.LoadWithCopyOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load32UGuarded(Instruction.LoadOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load32UToAccGuarded(Instruction.AccMemoryPointerOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load32UFromAccGuarded(Instruction.AccMemoryResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load32UInAccGuarded(Instruction.AccMemoryOffsetOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load32UToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i64Load32UWithCopyGuarded(Instruction.LoadWithCopyOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case f64LoadToFAccGuarded(Instruction.AccMemoryPointerOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case f64LoadFromAccToFAccGuarded(Instruction.AccMemoryOffsetOperand)
+    /// Memory32 load protected by the shared-memory guard reservation
+    case i32LoadMemory32Guarded(Instruction.AccMemoryPointerResultOperand)
 }
 
 extension Instruction {
@@ -2599,9 +2773,17 @@ extension Instruction {
         var pointer: VReg
         var result: VReg
         @inline(__always) static func load(from pc: inout Pc) -> Self {
-            let (offset) = pc.read((UInt64).self)
-            let (pointer, result, _, _, _, _) = pc.read((VReg, VReg, UInt8, UInt8, UInt8, UInt8).self)
-            return Self(offset: offset, pointer: pointer, result: result)
+            #if _endian(little)
+                let offset = pc.read(UInt64.self)
+                let word1 = pc.read(UInt64.self)
+                let pointer = VReg(byteOffset: Int16(truncatingIfNeeded: word1))
+                let result = VReg(byteOffset: Int16(truncatingIfNeeded: word1 >> 16))
+                return Self(offset: offset, pointer: pointer, result: result)
+            #else
+                let (offset) = pc.read((UInt64).self)
+                let (pointer, result, _, _, _, _) = pc.read((VReg, VReg, UInt8, UInt8, UInt8, UInt8).self)
+                return Self(offset: offset, pointer: pointer, result: result)
+            #endif
         }
         @inline(__always) static func emit(to emitSlot: ((Self) -> CodeSlot) -> Void) {
             emitSlot { $0.offset }
@@ -3370,8 +3552,15 @@ extension Instruction {
         var pointer: VReg
         var offset: UInt32
         @inline(__always) static func load(from pc: inout Pc) -> Self {
-            let (pointer, offset) = pc.read((VReg, UInt32).self)
-            return Self(pointer: pointer, offset: offset)
+            #if _endian(little)
+                let word0 = pc.read(UInt64.self)
+                let pointer = VReg(byteOffset: Int16(truncatingIfNeeded: word0))
+                let offset = UInt32(truncatingIfNeeded: word0 >> 32)
+                return Self(pointer: pointer, offset: offset)
+            #else
+                let (pointer, offset) = pc.read((VReg, UInt32).self)
+                return Self(pointer: pointer, offset: offset)
+            #endif
         }
         @inline(__always) static func emit(to emitSlot: ((Self) -> CodeSlot) -> Void) {
             emitSlot { unsafeBitCast(($0.pointer, $0.offset) as (VReg, UInt32), to: CodeSlot.self) }
@@ -3382,8 +3571,15 @@ extension Instruction {
         var result: VReg
         var offset: UInt32
         @inline(__always) static func load(from pc: inout Pc) -> Self {
-            let (result, offset) = pc.read((VReg, UInt32).self)
-            return Self(result: result, offset: offset)
+            #if _endian(little)
+                let word0 = pc.read(UInt64.self)
+                let result = VReg(byteOffset: Int16(truncatingIfNeeded: word0))
+                let offset = UInt32(truncatingIfNeeded: word0 >> 32)
+                return Self(result: result, offset: offset)
+            #else
+                let (result, offset) = pc.read((VReg, UInt32).self)
+                return Self(result: result, offset: offset)
+            #endif
         }
         @inline(__always) static func emit(to emitSlot: ((Self) -> CodeSlot) -> Void) {
             emitSlot { unsafeBitCast(($0.result, $0.offset) as (VReg, UInt32), to: CodeSlot.self) }
@@ -3393,8 +3589,14 @@ extension Instruction {
     struct AccMemoryOffsetOperand: InstructionImmediate {
         var offset: UInt32
         @inline(__always) static func load(from pc: inout Pc) -> Self {
-            let (offset, _, _, _, _) = pc.read((UInt32, UInt8, UInt8, UInt8, UInt8).self)
-            return Self(offset: offset)
+            #if _endian(little)
+                let word0 = pc.read(UInt64.self)
+                let offset = UInt32(truncatingIfNeeded: word0)
+                return Self(offset: offset)
+            #else
+                let (offset, _, _, _, _) = pc.read((UInt32, UInt8, UInt8, UInt8, UInt8).self)
+                return Self(offset: offset)
+            #endif
         }
         @inline(__always) static func emit(to emitSlot: ((Self) -> CodeSlot) -> Void) {
             emitSlot { unsafeBitCast(($0.offset, 0, 0, 0, 0) as (UInt32, UInt8, UInt8, UInt8, UInt8), to: CodeSlot.self) }
@@ -3494,8 +3696,16 @@ extension Instruction {
         var result: VReg
         var offset: UInt32
         @inline(__always) static func load(from pc: inout Pc) -> Self {
-            let (pointer, result, offset) = pc.read((VReg, VReg, UInt32).self)
-            return Self(pointer: pointer, result: result, offset: offset)
+            #if _endian(little)
+                let word0 = pc.read(UInt64.self)
+                let pointer = VReg(byteOffset: Int16(truncatingIfNeeded: word0))
+                let result = VReg(byteOffset: Int16(truncatingIfNeeded: word0 >> 16))
+                let offset = UInt32(truncatingIfNeeded: word0 >> 32)
+                return Self(pointer: pointer, result: result, offset: offset)
+            #else
+                let (pointer, result, offset) = pc.read((VReg, VReg, UInt32).self)
+                return Self(pointer: pointer, result: result, offset: offset)
+            #endif
         }
         @inline(__always) static func emit(to emitSlot: ((Self) -> CodeSlot) -> Void) {
             emitSlot { unsafeBitCast(($0.pointer, $0.result, $0.offset) as (VReg, VReg, UInt32), to: CodeSlot.self) }
@@ -3629,9 +3839,19 @@ extension Instruction {
         var offset: UInt32
         var copyDest: VReg
         @inline(__always) static func load(from pc: inout Pc) -> Self {
-            let (pointer, result, offset) = pc.read((VReg, VReg, UInt32).self)
-            let (copyDest, _, _, _, _, _, _) = pc.read((VReg, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8).self)
-            return Self(pointer: pointer, result: result, offset: offset, copyDest: copyDest)
+            #if _endian(little)
+                let word0 = pc.read(UInt64.self)
+                let pointer = VReg(byteOffset: Int16(truncatingIfNeeded: word0))
+                let result = VReg(byteOffset: Int16(truncatingIfNeeded: word0 >> 16))
+                let offset = UInt32(truncatingIfNeeded: word0 >> 32)
+                let word1 = pc.read(UInt64.self)
+                let copyDest = VReg(byteOffset: Int16(truncatingIfNeeded: word1))
+                return Self(pointer: pointer, result: result, offset: offset, copyDest: copyDest)
+            #else
+                let (pointer, result, offset) = pc.read((VReg, VReg, UInt32).self)
+                let (copyDest, _, _, _, _, _, _) = pc.read((VReg, UInt8, UInt8, UInt8, UInt8, UInt8, UInt8).self)
+                return Self(pointer: pointer, result: result, offset: offset, copyDest: copyDest)
+            #endif
         }
         @inline(__always) static func emit(to emitSlot: ((Self) -> CodeSlot) -> Void) {
             emitSlot { unsafeBitCast(($0.pointer, $0.result, $0.offset) as (VReg, VReg, UInt32), to: CodeSlot.self) }
@@ -4706,6 +4926,93 @@ extension Instruction {
         case .i64XorShiftMulPairReturn(let immediate): return immediate
         case .i32AddImmBrIf(let immediate): return immediate
         case .internalCopy2ArithmeticCall(let immediate): return immediate
+        case .i32LoadGuarded(let immediate): return immediate
+        case .i32LoadToAccGuarded(let immediate): return immediate
+        case .i32LoadFromAccGuarded(let immediate): return immediate
+        case .i32LoadInAccGuarded(let immediate): return immediate
+        case .i32LoadToAccAndSlotGuarded(let immediate): return immediate
+        case .i32LoadWithCopyGuarded(let immediate): return immediate
+        case .i64LoadGuarded(let immediate): return immediate
+        case .i64LoadToAccGuarded(let immediate): return immediate
+        case .i64LoadFromAccGuarded(let immediate): return immediate
+        case .i64LoadInAccGuarded(let immediate): return immediate
+        case .i64LoadToAccAndSlotGuarded(let immediate): return immediate
+        case .i64LoadWithCopyGuarded(let immediate): return immediate
+        case .f32LoadGuarded(let immediate): return immediate
+        case .f32LoadToAccGuarded(let immediate): return immediate
+        case .f32LoadFromAccGuarded(let immediate): return immediate
+        case .f32LoadInAccGuarded(let immediate): return immediate
+        case .f32LoadToAccAndSlotGuarded(let immediate): return immediate
+        case .f32LoadWithCopyGuarded(let immediate): return immediate
+        case .f64LoadGuarded(let immediate): return immediate
+        case .f64LoadToAccGuarded(let immediate): return immediate
+        case .f64LoadFromAccGuarded(let immediate): return immediate
+        case .f64LoadInAccGuarded(let immediate): return immediate
+        case .f64LoadToAccAndSlotGuarded(let immediate): return immediate
+        case .f64LoadWithCopyGuarded(let immediate): return immediate
+        case .i32Load8SGuarded(let immediate): return immediate
+        case .i32Load8SToAccGuarded(let immediate): return immediate
+        case .i32Load8SFromAccGuarded(let immediate): return immediate
+        case .i32Load8SInAccGuarded(let immediate): return immediate
+        case .i32Load8SToAccAndSlotGuarded(let immediate): return immediate
+        case .i32Load8SWithCopyGuarded(let immediate): return immediate
+        case .i32Load8UGuarded(let immediate): return immediate
+        case .i32Load8UToAccGuarded(let immediate): return immediate
+        case .i32Load8UFromAccGuarded(let immediate): return immediate
+        case .i32Load8UInAccGuarded(let immediate): return immediate
+        case .i32Load8UToAccAndSlotGuarded(let immediate): return immediate
+        case .i32Load8UWithCopyGuarded(let immediate): return immediate
+        case .i32Load16SGuarded(let immediate): return immediate
+        case .i32Load16SToAccGuarded(let immediate): return immediate
+        case .i32Load16SFromAccGuarded(let immediate): return immediate
+        case .i32Load16SInAccGuarded(let immediate): return immediate
+        case .i32Load16SToAccAndSlotGuarded(let immediate): return immediate
+        case .i32Load16SWithCopyGuarded(let immediate): return immediate
+        case .i32Load16UGuarded(let immediate): return immediate
+        case .i32Load16UToAccGuarded(let immediate): return immediate
+        case .i32Load16UFromAccGuarded(let immediate): return immediate
+        case .i32Load16UInAccGuarded(let immediate): return immediate
+        case .i32Load16UToAccAndSlotGuarded(let immediate): return immediate
+        case .i32Load16UWithCopyGuarded(let immediate): return immediate
+        case .i64Load8SGuarded(let immediate): return immediate
+        case .i64Load8SToAccGuarded(let immediate): return immediate
+        case .i64Load8SFromAccGuarded(let immediate): return immediate
+        case .i64Load8SInAccGuarded(let immediate): return immediate
+        case .i64Load8SToAccAndSlotGuarded(let immediate): return immediate
+        case .i64Load8SWithCopyGuarded(let immediate): return immediate
+        case .i64Load8UGuarded(let immediate): return immediate
+        case .i64Load8UToAccGuarded(let immediate): return immediate
+        case .i64Load8UFromAccGuarded(let immediate): return immediate
+        case .i64Load8UInAccGuarded(let immediate): return immediate
+        case .i64Load8UToAccAndSlotGuarded(let immediate): return immediate
+        case .i64Load8UWithCopyGuarded(let immediate): return immediate
+        case .i64Load16SGuarded(let immediate): return immediate
+        case .i64Load16SToAccGuarded(let immediate): return immediate
+        case .i64Load16SFromAccGuarded(let immediate): return immediate
+        case .i64Load16SInAccGuarded(let immediate): return immediate
+        case .i64Load16SToAccAndSlotGuarded(let immediate): return immediate
+        case .i64Load16SWithCopyGuarded(let immediate): return immediate
+        case .i64Load16UGuarded(let immediate): return immediate
+        case .i64Load16UToAccGuarded(let immediate): return immediate
+        case .i64Load16UFromAccGuarded(let immediate): return immediate
+        case .i64Load16UInAccGuarded(let immediate): return immediate
+        case .i64Load16UToAccAndSlotGuarded(let immediate): return immediate
+        case .i64Load16UWithCopyGuarded(let immediate): return immediate
+        case .i64Load32SGuarded(let immediate): return immediate
+        case .i64Load32SToAccGuarded(let immediate): return immediate
+        case .i64Load32SFromAccGuarded(let immediate): return immediate
+        case .i64Load32SInAccGuarded(let immediate): return immediate
+        case .i64Load32SToAccAndSlotGuarded(let immediate): return immediate
+        case .i64Load32SWithCopyGuarded(let immediate): return immediate
+        case .i64Load32UGuarded(let immediate): return immediate
+        case .i64Load32UToAccGuarded(let immediate): return immediate
+        case .i64Load32UFromAccGuarded(let immediate): return immediate
+        case .i64Load32UInAccGuarded(let immediate): return immediate
+        case .i64Load32UToAccAndSlotGuarded(let immediate): return immediate
+        case .i64Load32UWithCopyGuarded(let immediate): return immediate
+        case .f64LoadToFAccGuarded(let immediate): return immediate
+        case .f64LoadFromAccToFAccGuarded(let immediate): return immediate
+        case .i32LoadMemory32Guarded(let immediate): return immediate
         default: return nil
         }
     }
@@ -5459,6 +5766,93 @@ extension Instruction {
         case .i64XorShiftMulPairReturn(let immediate): immediate.emit(to: emit)
         case .i32AddImmBrIf(let immediate): immediate.emit(to: emit)
         case .internalCopy2ArithmeticCall(let immediate): immediate.emit(to: emit)
+        case .i32LoadGuarded(let immediate): immediate.emit(to: emit)
+        case .i32LoadToAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i32LoadFromAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i32LoadInAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i32LoadToAccAndSlotGuarded(let immediate): immediate.emit(to: emit)
+        case .i32LoadWithCopyGuarded(let immediate): immediate.emit(to: emit)
+        case .i64LoadGuarded(let immediate): immediate.emit(to: emit)
+        case .i64LoadToAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64LoadFromAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64LoadInAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64LoadToAccAndSlotGuarded(let immediate): immediate.emit(to: emit)
+        case .i64LoadWithCopyGuarded(let immediate): immediate.emit(to: emit)
+        case .f32LoadGuarded(let immediate): immediate.emit(to: emit)
+        case .f32LoadToAccGuarded(let immediate): immediate.emit(to: emit)
+        case .f32LoadFromAccGuarded(let immediate): immediate.emit(to: emit)
+        case .f32LoadInAccGuarded(let immediate): immediate.emit(to: emit)
+        case .f32LoadToAccAndSlotGuarded(let immediate): immediate.emit(to: emit)
+        case .f32LoadWithCopyGuarded(let immediate): immediate.emit(to: emit)
+        case .f64LoadGuarded(let immediate): immediate.emit(to: emit)
+        case .f64LoadToAccGuarded(let immediate): immediate.emit(to: emit)
+        case .f64LoadFromAccGuarded(let immediate): immediate.emit(to: emit)
+        case .f64LoadInAccGuarded(let immediate): immediate.emit(to: emit)
+        case .f64LoadToAccAndSlotGuarded(let immediate): immediate.emit(to: emit)
+        case .f64LoadWithCopyGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load8SGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load8SToAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load8SFromAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load8SInAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load8SToAccAndSlotGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load8SWithCopyGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load8UGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load8UToAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load8UFromAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load8UInAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load8UToAccAndSlotGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load8UWithCopyGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load16SGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load16SToAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load16SFromAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load16SInAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load16SToAccAndSlotGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load16SWithCopyGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load16UGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load16UToAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load16UFromAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load16UInAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load16UToAccAndSlotGuarded(let immediate): immediate.emit(to: emit)
+        case .i32Load16UWithCopyGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load8SGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load8SToAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load8SFromAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load8SInAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load8SToAccAndSlotGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load8SWithCopyGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load8UGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load8UToAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load8UFromAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load8UInAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load8UToAccAndSlotGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load8UWithCopyGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load16SGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load16SToAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load16SFromAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load16SInAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load16SToAccAndSlotGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load16SWithCopyGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load16UGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load16UToAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load16UFromAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load16UInAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load16UToAccAndSlotGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load16UWithCopyGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load32SGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load32SToAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load32SFromAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load32SInAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load32SToAccAndSlotGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load32SWithCopyGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load32UGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load32UToAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load32UFromAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load32UInAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load32UToAccAndSlotGuarded(let immediate): immediate.emit(to: emit)
+        case .i64Load32UWithCopyGuarded(let immediate): immediate.emit(to: emit)
+        case .f64LoadToFAccGuarded(let immediate): immediate.emit(to: emit)
+        case .f64LoadFromAccToFAccGuarded(let immediate): immediate.emit(to: emit)
+        case .i32LoadMemory32Guarded(let immediate): immediate.emit(to: emit)
         default: return
         }
     }
@@ -6224,19 +6618,106 @@ extension Instruction {
         case .i64XorShiftMulPair: return 752
         case .i64XorShiftMulPairReturn: return 753
         case .i32AddImmBrIf: return 754
-        default: return 755  // .internalCopy2ArithmeticCall
+        case .internalCopy2ArithmeticCall: return 755
+        case .i32LoadGuarded: return 756
+        case .i32LoadToAccGuarded: return 757
+        case .i32LoadFromAccGuarded: return 758
+        case .i32LoadInAccGuarded: return 759
+        case .i32LoadToAccAndSlotGuarded: return 760
+        case .i32LoadWithCopyGuarded: return 761
+        case .i64LoadGuarded: return 762
+        case .i64LoadToAccGuarded: return 763
+        case .i64LoadFromAccGuarded: return 764
+        case .i64LoadInAccGuarded: return 765
+        case .i64LoadToAccAndSlotGuarded: return 766
+        case .i64LoadWithCopyGuarded: return 767
+        case .f32LoadGuarded: return 768
+        case .f32LoadToAccGuarded: return 769
+        case .f32LoadFromAccGuarded: return 770
+        case .f32LoadInAccGuarded: return 771
+        case .f32LoadToAccAndSlotGuarded: return 772
+        case .f32LoadWithCopyGuarded: return 773
+        case .f64LoadGuarded: return 774
+        case .f64LoadToAccGuarded: return 775
+        case .f64LoadFromAccGuarded: return 776
+        case .f64LoadInAccGuarded: return 777
+        case .f64LoadToAccAndSlotGuarded: return 778
+        case .f64LoadWithCopyGuarded: return 779
+        case .i32Load8SGuarded: return 780
+        case .i32Load8SToAccGuarded: return 781
+        case .i32Load8SFromAccGuarded: return 782
+        case .i32Load8SInAccGuarded: return 783
+        case .i32Load8SToAccAndSlotGuarded: return 784
+        case .i32Load8SWithCopyGuarded: return 785
+        case .i32Load8UGuarded: return 786
+        case .i32Load8UToAccGuarded: return 787
+        case .i32Load8UFromAccGuarded: return 788
+        case .i32Load8UInAccGuarded: return 789
+        case .i32Load8UToAccAndSlotGuarded: return 790
+        case .i32Load8UWithCopyGuarded: return 791
+        case .i32Load16SGuarded: return 792
+        case .i32Load16SToAccGuarded: return 793
+        case .i32Load16SFromAccGuarded: return 794
+        case .i32Load16SInAccGuarded: return 795
+        case .i32Load16SToAccAndSlotGuarded: return 796
+        case .i32Load16SWithCopyGuarded: return 797
+        case .i32Load16UGuarded: return 798
+        case .i32Load16UToAccGuarded: return 799
+        case .i32Load16UFromAccGuarded: return 800
+        case .i32Load16UInAccGuarded: return 801
+        case .i32Load16UToAccAndSlotGuarded: return 802
+        case .i32Load16UWithCopyGuarded: return 803
+        case .i64Load8SGuarded: return 804
+        case .i64Load8SToAccGuarded: return 805
+        case .i64Load8SFromAccGuarded: return 806
+        case .i64Load8SInAccGuarded: return 807
+        case .i64Load8SToAccAndSlotGuarded: return 808
+        case .i64Load8SWithCopyGuarded: return 809
+        case .i64Load8UGuarded: return 810
+        case .i64Load8UToAccGuarded: return 811
+        case .i64Load8UFromAccGuarded: return 812
+        case .i64Load8UInAccGuarded: return 813
+        case .i64Load8UToAccAndSlotGuarded: return 814
+        case .i64Load8UWithCopyGuarded: return 815
+        case .i64Load16SGuarded: return 816
+        case .i64Load16SToAccGuarded: return 817
+        case .i64Load16SFromAccGuarded: return 818
+        case .i64Load16SInAccGuarded: return 819
+        case .i64Load16SToAccAndSlotGuarded: return 820
+        case .i64Load16SWithCopyGuarded: return 821
+        case .i64Load16UGuarded: return 822
+        case .i64Load16UToAccGuarded: return 823
+        case .i64Load16UFromAccGuarded: return 824
+        case .i64Load16UInAccGuarded: return 825
+        case .i64Load16UToAccAndSlotGuarded: return 826
+        case .i64Load16UWithCopyGuarded: return 827
+        case .i64Load32SGuarded: return 828
+        case .i64Load32SToAccGuarded: return 829
+        case .i64Load32SFromAccGuarded: return 830
+        case .i64Load32SInAccGuarded: return 831
+        case .i64Load32SToAccAndSlotGuarded: return 832
+        case .i64Load32SWithCopyGuarded: return 833
+        case .i64Load32UGuarded: return 834
+        case .i64Load32UToAccGuarded: return 835
+        case .i64Load32UFromAccGuarded: return 836
+        case .i64Load32UInAccGuarded: return 837
+        case .i64Load32UToAccAndSlotGuarded: return 838
+        case .i64Load32UWithCopyGuarded: return 839
+        case .f64LoadToFAccGuarded: return 840
+        case .f64LoadFromAccToFAccGuarded: return 841
+        default: return 842  // .i32LoadMemory32Guarded
         }
     }
 }
 extension Instruction {
     /// The number of opcodes, trap pseudo-instructions included.
-    static let opcodeCount = 756
+    static let opcodeCount = 843
 
     /// Whether only the direct-threaded dispatcher implements this instruction;
     /// `Execution.doExecute` has no case for it.
     var isDirectThreadedOnly: Bool {
         switch opcodeID {
-        case 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388, 389, 390, 391, 392, 393, 394, 395, 396, 397, 398, 399, 400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 418, 419, 420, 421, 422, 423, 424, 425, 426, 427, 428, 429, 430, 431, 432, 433, 434, 435, 436, 437, 438, 439, 440, 441, 442, 443, 444, 445, 446, 447, 448, 449, 450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 460, 461, 462, 463, 464, 465, 466, 467, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477, 478, 479, 480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506, 507, 508, 509, 510, 511, 512, 513, 514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550, 551, 552, 553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 593, 594, 595, 596, 597, 598, 599, 600, 601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611, 612, 613, 614, 615, 616, 617, 618, 619, 620, 621, 622, 623, 624, 625, 626, 627, 628, 629, 630, 631, 632, 633, 634, 635, 636, 637, 638, 639, 640, 641, 642, 643, 644, 645, 646, 647, 648, 649, 650, 651, 652, 653, 654, 655, 656, 657, 658, 659, 660, 661, 662, 663, 664, 665, 666, 667, 668, 669, 670, 671, 672, 673, 674, 675, 676, 677, 678, 679, 680, 681, 682, 683, 684, 685, 686, 687, 688, 689, 690, 691, 692, 693, 694, 695, 696, 697, 698, 699, 700, 701, 702, 703, 704, 705, 706, 707, 708, 709, 710, 711, 712, 754: return true
+        case 366, 367, 368, 369, 370, 371, 372, 373, 374, 375, 376, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 387, 388, 389, 390, 391, 392, 393, 394, 395, 396, 397, 398, 399, 400, 401, 402, 403, 404, 405, 406, 407, 408, 409, 410, 411, 412, 413, 414, 415, 416, 417, 418, 419, 420, 421, 422, 423, 424, 425, 426, 427, 428, 429, 430, 431, 432, 433, 434, 435, 436, 437, 438, 439, 440, 441, 442, 443, 444, 445, 446, 447, 448, 449, 450, 451, 452, 453, 454, 455, 456, 457, 458, 459, 460, 461, 462, 463, 464, 465, 466, 467, 468, 469, 470, 471, 472, 473, 474, 475, 476, 477, 478, 479, 480, 481, 482, 483, 484, 485, 486, 487, 488, 489, 490, 491, 492, 493, 494, 495, 496, 497, 498, 499, 500, 501, 502, 503, 504, 505, 506, 507, 508, 509, 510, 511, 512, 513, 514, 515, 516, 517, 518, 519, 520, 521, 522, 523, 524, 525, 526, 527, 528, 529, 530, 531, 532, 533, 534, 535, 536, 537, 538, 539, 540, 541, 542, 543, 544, 545, 546, 547, 548, 549, 550, 551, 552, 553, 554, 555, 556, 557, 558, 559, 560, 561, 562, 563, 564, 565, 566, 567, 568, 569, 570, 571, 572, 573, 574, 575, 576, 577, 578, 579, 580, 581, 582, 583, 584, 585, 586, 587, 588, 589, 590, 591, 592, 593, 594, 595, 596, 597, 598, 599, 600, 601, 602, 603, 604, 605, 606, 607, 608, 609, 610, 611, 612, 613, 614, 615, 616, 617, 618, 619, 620, 621, 622, 623, 624, 625, 626, 627, 628, 629, 630, 631, 632, 633, 634, 635, 636, 637, 638, 639, 640, 641, 642, 643, 644, 645, 646, 647, 648, 649, 650, 651, 652, 653, 654, 655, 656, 657, 658, 659, 660, 661, 662, 663, 664, 665, 666, 667, 668, 669, 670, 671, 672, 673, 674, 675, 676, 677, 678, 679, 680, 681, 682, 683, 684, 685, 686, 687, 688, 689, 690, 691, 692, 693, 694, 695, 696, 697, 698, 699, 700, 701, 702, 703, 704, 705, 706, 707, 708, 709, 710, 711, 712, 754, 757, 758, 759, 760, 763, 764, 765, 766, 769, 770, 771, 772, 775, 776, 777, 778, 781, 782, 783, 784, 787, 788, 789, 790, 793, 794, 795, 796, 799, 800, 801, 802, 805, 806, 807, 808, 811, 812, 813, 814, 817, 818, 819, 820, 823, 824, 825, 826, 829, 830, 831, 832, 835, 836, 837, 838, 840, 841: return true
         default: return false
         }
     }
@@ -7009,6 +7490,93 @@ extension Instruction {
         case 753: return .i64XorShiftMulPairReturn(Instruction.I64XorShiftMulPairReturnOperand.load(from: &pc))
         case 754: return .i32AddImmBrIf(Instruction.I32AddImmBrIfOperand.load(from: &pc))
         case 755: return .internalCopy2ArithmeticCall(Instruction.Copy2CallOperand.load(from: &pc))
+        case 756: return .i32LoadGuarded(Instruction.LoadOperand.load(from: &pc))
+        case 757: return .i32LoadToAccGuarded(Instruction.AccMemoryPointerOperand.load(from: &pc))
+        case 758: return .i32LoadFromAccGuarded(Instruction.AccMemoryResultOperand.load(from: &pc))
+        case 759: return .i32LoadInAccGuarded(Instruction.AccMemoryOffsetOperand.load(from: &pc))
+        case 760: return .i32LoadToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 761: return .i32LoadWithCopyGuarded(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 762: return .i64LoadGuarded(Instruction.LoadOperand.load(from: &pc))
+        case 763: return .i64LoadToAccGuarded(Instruction.AccMemoryPointerOperand.load(from: &pc))
+        case 764: return .i64LoadFromAccGuarded(Instruction.AccMemoryResultOperand.load(from: &pc))
+        case 765: return .i64LoadInAccGuarded(Instruction.AccMemoryOffsetOperand.load(from: &pc))
+        case 766: return .i64LoadToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 767: return .i64LoadWithCopyGuarded(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 768: return .f32LoadGuarded(Instruction.LoadOperand.load(from: &pc))
+        case 769: return .f32LoadToAccGuarded(Instruction.AccMemoryPointerOperand.load(from: &pc))
+        case 770: return .f32LoadFromAccGuarded(Instruction.AccMemoryResultOperand.load(from: &pc))
+        case 771: return .f32LoadInAccGuarded(Instruction.AccMemoryOffsetOperand.load(from: &pc))
+        case 772: return .f32LoadToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 773: return .f32LoadWithCopyGuarded(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 774: return .f64LoadGuarded(Instruction.LoadOperand.load(from: &pc))
+        case 775: return .f64LoadToAccGuarded(Instruction.AccMemoryPointerOperand.load(from: &pc))
+        case 776: return .f64LoadFromAccGuarded(Instruction.AccMemoryResultOperand.load(from: &pc))
+        case 777: return .f64LoadInAccGuarded(Instruction.AccMemoryOffsetOperand.load(from: &pc))
+        case 778: return .f64LoadToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 779: return .f64LoadWithCopyGuarded(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 780: return .i32Load8SGuarded(Instruction.LoadOperand.load(from: &pc))
+        case 781: return .i32Load8SToAccGuarded(Instruction.AccMemoryPointerOperand.load(from: &pc))
+        case 782: return .i32Load8SFromAccGuarded(Instruction.AccMemoryResultOperand.load(from: &pc))
+        case 783: return .i32Load8SInAccGuarded(Instruction.AccMemoryOffsetOperand.load(from: &pc))
+        case 784: return .i32Load8SToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 785: return .i32Load8SWithCopyGuarded(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 786: return .i32Load8UGuarded(Instruction.LoadOperand.load(from: &pc))
+        case 787: return .i32Load8UToAccGuarded(Instruction.AccMemoryPointerOperand.load(from: &pc))
+        case 788: return .i32Load8UFromAccGuarded(Instruction.AccMemoryResultOperand.load(from: &pc))
+        case 789: return .i32Load8UInAccGuarded(Instruction.AccMemoryOffsetOperand.load(from: &pc))
+        case 790: return .i32Load8UToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 791: return .i32Load8UWithCopyGuarded(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 792: return .i32Load16SGuarded(Instruction.LoadOperand.load(from: &pc))
+        case 793: return .i32Load16SToAccGuarded(Instruction.AccMemoryPointerOperand.load(from: &pc))
+        case 794: return .i32Load16SFromAccGuarded(Instruction.AccMemoryResultOperand.load(from: &pc))
+        case 795: return .i32Load16SInAccGuarded(Instruction.AccMemoryOffsetOperand.load(from: &pc))
+        case 796: return .i32Load16SToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 797: return .i32Load16SWithCopyGuarded(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 798: return .i32Load16UGuarded(Instruction.LoadOperand.load(from: &pc))
+        case 799: return .i32Load16UToAccGuarded(Instruction.AccMemoryPointerOperand.load(from: &pc))
+        case 800: return .i32Load16UFromAccGuarded(Instruction.AccMemoryResultOperand.load(from: &pc))
+        case 801: return .i32Load16UInAccGuarded(Instruction.AccMemoryOffsetOperand.load(from: &pc))
+        case 802: return .i32Load16UToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 803: return .i32Load16UWithCopyGuarded(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 804: return .i64Load8SGuarded(Instruction.LoadOperand.load(from: &pc))
+        case 805: return .i64Load8SToAccGuarded(Instruction.AccMemoryPointerOperand.load(from: &pc))
+        case 806: return .i64Load8SFromAccGuarded(Instruction.AccMemoryResultOperand.load(from: &pc))
+        case 807: return .i64Load8SInAccGuarded(Instruction.AccMemoryOffsetOperand.load(from: &pc))
+        case 808: return .i64Load8SToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 809: return .i64Load8SWithCopyGuarded(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 810: return .i64Load8UGuarded(Instruction.LoadOperand.load(from: &pc))
+        case 811: return .i64Load8UToAccGuarded(Instruction.AccMemoryPointerOperand.load(from: &pc))
+        case 812: return .i64Load8UFromAccGuarded(Instruction.AccMemoryResultOperand.load(from: &pc))
+        case 813: return .i64Load8UInAccGuarded(Instruction.AccMemoryOffsetOperand.load(from: &pc))
+        case 814: return .i64Load8UToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 815: return .i64Load8UWithCopyGuarded(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 816: return .i64Load16SGuarded(Instruction.LoadOperand.load(from: &pc))
+        case 817: return .i64Load16SToAccGuarded(Instruction.AccMemoryPointerOperand.load(from: &pc))
+        case 818: return .i64Load16SFromAccGuarded(Instruction.AccMemoryResultOperand.load(from: &pc))
+        case 819: return .i64Load16SInAccGuarded(Instruction.AccMemoryOffsetOperand.load(from: &pc))
+        case 820: return .i64Load16SToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 821: return .i64Load16SWithCopyGuarded(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 822: return .i64Load16UGuarded(Instruction.LoadOperand.load(from: &pc))
+        case 823: return .i64Load16UToAccGuarded(Instruction.AccMemoryPointerOperand.load(from: &pc))
+        case 824: return .i64Load16UFromAccGuarded(Instruction.AccMemoryResultOperand.load(from: &pc))
+        case 825: return .i64Load16UInAccGuarded(Instruction.AccMemoryOffsetOperand.load(from: &pc))
+        case 826: return .i64Load16UToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 827: return .i64Load16UWithCopyGuarded(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 828: return .i64Load32SGuarded(Instruction.LoadOperand.load(from: &pc))
+        case 829: return .i64Load32SToAccGuarded(Instruction.AccMemoryPointerOperand.load(from: &pc))
+        case 830: return .i64Load32SFromAccGuarded(Instruction.AccMemoryResultOperand.load(from: &pc))
+        case 831: return .i64Load32SInAccGuarded(Instruction.AccMemoryOffsetOperand.load(from: &pc))
+        case 832: return .i64Load32SToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 833: return .i64Load32SWithCopyGuarded(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 834: return .i64Load32UGuarded(Instruction.LoadOperand.load(from: &pc))
+        case 835: return .i64Load32UToAccGuarded(Instruction.AccMemoryPointerOperand.load(from: &pc))
+        case 836: return .i64Load32UFromAccGuarded(Instruction.AccMemoryResultOperand.load(from: &pc))
+        case 837: return .i64Load32UInAccGuarded(Instruction.AccMemoryOffsetOperand.load(from: &pc))
+        case 838: return .i64Load32UToAccAndSlotGuarded(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
+        case 839: return .i64Load32UWithCopyGuarded(Instruction.LoadWithCopyOperand.load(from: &pc))
+        case 840: return .f64LoadToFAccGuarded(Instruction.AccMemoryPointerOperand.load(from: &pc))
+        case 841: return .f64LoadFromAccToFAccGuarded(Instruction.AccMemoryOffsetOperand.load(from: &pc))
+        case 842: return .i32LoadMemory32Guarded(Instruction.AccMemoryPointerResultOperand.load(from: &pc))
         default: fatalError("Unknown instruction opcode: \(opcode)")
         }
     }
@@ -7779,6 +8347,93 @@ extension Instruction {
         case 753: return "i64XorShiftMulPairReturn"
         case 754: return "i32AddImmBrIf"
         case 755: return "internalCopy2ArithmeticCall"
+        case 756: return "i32LoadGuarded"
+        case 757: return "i32LoadToAccGuarded"
+        case 758: return "i32LoadFromAccGuarded"
+        case 759: return "i32LoadInAccGuarded"
+        case 760: return "i32LoadToAccAndSlotGuarded"
+        case 761: return "i32LoadWithCopyGuarded"
+        case 762: return "i64LoadGuarded"
+        case 763: return "i64LoadToAccGuarded"
+        case 764: return "i64LoadFromAccGuarded"
+        case 765: return "i64LoadInAccGuarded"
+        case 766: return "i64LoadToAccAndSlotGuarded"
+        case 767: return "i64LoadWithCopyGuarded"
+        case 768: return "f32LoadGuarded"
+        case 769: return "f32LoadToAccGuarded"
+        case 770: return "f32LoadFromAccGuarded"
+        case 771: return "f32LoadInAccGuarded"
+        case 772: return "f32LoadToAccAndSlotGuarded"
+        case 773: return "f32LoadWithCopyGuarded"
+        case 774: return "f64LoadGuarded"
+        case 775: return "f64LoadToAccGuarded"
+        case 776: return "f64LoadFromAccGuarded"
+        case 777: return "f64LoadInAccGuarded"
+        case 778: return "f64LoadToAccAndSlotGuarded"
+        case 779: return "f64LoadWithCopyGuarded"
+        case 780: return "i32Load8SGuarded"
+        case 781: return "i32Load8SToAccGuarded"
+        case 782: return "i32Load8SFromAccGuarded"
+        case 783: return "i32Load8SInAccGuarded"
+        case 784: return "i32Load8SToAccAndSlotGuarded"
+        case 785: return "i32Load8SWithCopyGuarded"
+        case 786: return "i32Load8UGuarded"
+        case 787: return "i32Load8UToAccGuarded"
+        case 788: return "i32Load8UFromAccGuarded"
+        case 789: return "i32Load8UInAccGuarded"
+        case 790: return "i32Load8UToAccAndSlotGuarded"
+        case 791: return "i32Load8UWithCopyGuarded"
+        case 792: return "i32Load16SGuarded"
+        case 793: return "i32Load16SToAccGuarded"
+        case 794: return "i32Load16SFromAccGuarded"
+        case 795: return "i32Load16SInAccGuarded"
+        case 796: return "i32Load16SToAccAndSlotGuarded"
+        case 797: return "i32Load16SWithCopyGuarded"
+        case 798: return "i32Load16UGuarded"
+        case 799: return "i32Load16UToAccGuarded"
+        case 800: return "i32Load16UFromAccGuarded"
+        case 801: return "i32Load16UInAccGuarded"
+        case 802: return "i32Load16UToAccAndSlotGuarded"
+        case 803: return "i32Load16UWithCopyGuarded"
+        case 804: return "i64Load8SGuarded"
+        case 805: return "i64Load8SToAccGuarded"
+        case 806: return "i64Load8SFromAccGuarded"
+        case 807: return "i64Load8SInAccGuarded"
+        case 808: return "i64Load8SToAccAndSlotGuarded"
+        case 809: return "i64Load8SWithCopyGuarded"
+        case 810: return "i64Load8UGuarded"
+        case 811: return "i64Load8UToAccGuarded"
+        case 812: return "i64Load8UFromAccGuarded"
+        case 813: return "i64Load8UInAccGuarded"
+        case 814: return "i64Load8UToAccAndSlotGuarded"
+        case 815: return "i64Load8UWithCopyGuarded"
+        case 816: return "i64Load16SGuarded"
+        case 817: return "i64Load16SToAccGuarded"
+        case 818: return "i64Load16SFromAccGuarded"
+        case 819: return "i64Load16SInAccGuarded"
+        case 820: return "i64Load16SToAccAndSlotGuarded"
+        case 821: return "i64Load16SWithCopyGuarded"
+        case 822: return "i64Load16UGuarded"
+        case 823: return "i64Load16UToAccGuarded"
+        case 824: return "i64Load16UFromAccGuarded"
+        case 825: return "i64Load16UInAccGuarded"
+        case 826: return "i64Load16UToAccAndSlotGuarded"
+        case 827: return "i64Load16UWithCopyGuarded"
+        case 828: return "i64Load32SGuarded"
+        case 829: return "i64Load32SToAccGuarded"
+        case 830: return "i64Load32SFromAccGuarded"
+        case 831: return "i64Load32SInAccGuarded"
+        case 832: return "i64Load32SToAccAndSlotGuarded"
+        case 833: return "i64Load32SWithCopyGuarded"
+        case 834: return "i64Load32UGuarded"
+        case 835: return "i64Load32UToAccGuarded"
+        case 836: return "i64Load32UFromAccGuarded"
+        case 837: return "i64Load32UInAccGuarded"
+        case 838: return "i64Load32UToAccAndSlotGuarded"
+        case 839: return "i64Load32UWithCopyGuarded"
+        case 840: return "f64LoadToFAccGuarded"
+        case 841: return "f64LoadFromAccToFAccGuarded"
+        case 842: return "i32LoadMemory32Guarded"
         default: fatalError("Unknown instruction index: \(opcode)")
         }
     }

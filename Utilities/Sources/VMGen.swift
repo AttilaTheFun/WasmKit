@@ -286,6 +286,38 @@ enum VMGen {
             if let trap = memoryLoad(sp: sp.pointee, md: md.pointee, ms: ms.pointee, loadOperand: immediate, loadAs: \(op.loadAs).self, castToValue: { \(op.castToValue) }) { %TRAP% }
             """
         }
+        for op in memoryLoadOps {
+            let cast = op.castToValue.replacingOccurrences(of: "$0", with: "raw")
+            let shapes: [(Instruction, String, String, String)] = [
+                (op.instruction, "UInt64(sp.pointee[i32: immediate.pointer])", "", "sp.pointee[immediate.result] = value"),
+                (op.toAccInstruction, "UInt64(sp.pointee[i32: immediate.pointer])", "", "ireg.pointee = value.storage"),
+                (op.fromAccInstruction, "UInt64(UInt32(truncatingIfNeeded: ireg.pointee))", "", "sp.pointee[immediate.result] = value"),
+                (op.inAccInstruction, "UInt64(UInt32(truncatingIfNeeded: ireg.pointee))", "", "ireg.pointee = value.storage"),
+                (op.toAccAndSlotInstruction, "UInt64(sp.pointee[i32: immediate.pointer])", "", "sp.pointee[immediate.result] = value; ireg.pointee = value.storage"),
+                (op.withCopyInstruction, "UInt64(sp.pointee[i32: immediate.pointer])", "sp.pointee[immediate.copyDest] = sp.pointee[immediate.pointer]", "sp.pointee[immediate.result] = value"),
+            ]
+            for (instruction, input, copy, output) in shapes {
+                inlineImpls[instruction.name + "Guarded"] = """
+                    let address = \(input) &+ UInt64(immediate.offset)
+                    \(copy)
+                    let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: \(op.loadAs).self).littleEndian
+                    let value: UntypedValue = \(cast)
+                    \(output)
+                    """
+            }
+        }
+        inlineImpls["i32LoadMemory32Guarded"] = """
+            let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+            sp.pointee[i32: immediate.result] = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt32.self).littleEndian
+            """
+        inlineImpls["f64LoadToFAccGuarded"] = """
+            let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+            freg.pointee = Double(bitPattern: md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt64.self).littleEndian)
+            """
+        inlineImpls["f64LoadFromAccToFAccGuarded"] = """
+            let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+            freg.pointee = Double(bitPattern: md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt64.self).littleEndian)
+            """
         for op in memoryStoreOps {
             inlineImpls[op.instruction.name] = """
             if let trap = memoryStore(sp: sp.pointee, md: md.pointee, ms: ms.pointee, storeOperand: immediate, castFromValue: { \(op.castFromValue) }) { %TRAP% }

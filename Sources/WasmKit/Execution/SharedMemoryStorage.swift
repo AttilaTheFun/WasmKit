@@ -73,10 +73,11 @@
                 throw Trap(.sharedMemoryRequiresMprotect)
             }
             #if arch(x86_64) || arch(arm64)
-                // Reserve the wasm32 range plus the offset guard so OOB faults hit the guard
-                // region; commit the initial pages.
+                // Keep the minimum guard independent of the creating engine: a different
+                // engine may later import this memory and select guarded load handlers.
+                // Commit only the initial pages; the rest must remain inaccessible.
                 let reservationSize = MprotectLinearMemory.wasm32ReservationSize(
-                    offsetGuardSize: engineConfiguration.memoryOffsetGuardSize)
+                    offsetGuardSize: max(Memory32GuardedLoad.offsetGuardSize, engineConfiguration.memoryOffsetGuardSize))
                 guard let vm = SystemVirtualMemory(reservationBytes: reservationSize, commitBytes: initialBytes) else {
                     throw Trap(.mmapFailed(reserveBytes: reservationSize))
                 }

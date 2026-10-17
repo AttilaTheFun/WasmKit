@@ -1966,6 +1966,20 @@ extension VMGen {
         addBranch.useIreg = .write
         instructions.append(addBranch)
         instructions.append(Instruction(name: "internalCopy2ArithmeticCall", documentation: "Copy two arguments and execute an exact two-instruction arithmetic callee", isControl: true, mayUpdateFrame: true, useCurrentMemory: .write, immediateLayout: .copy2Call))
+        // Guarded variants keep the exact operand layouts of the checked forms.
+        // The translator chooses their heads only after proving memory32/shared
+        // backing and a constant offset covered by its minimum reservation.
+        let guardedSources = memoryLoadOps.flatMap { op in
+            [op.instruction, op.toAccInstruction, op.fromAccInstruction,
+             op.inAccInstruction, op.toAccAndSlotInstruction, op.withCopyInstruction]
+        } + instructions.filter { ["i32LoadMemory32", "f64LoadToFAcc", "f64LoadFromAccToFAcc"].contains($0.name) }
+        for var instruction in guardedSources {
+            instruction.name += "Guarded"
+            instruction.documentation = "Memory32 load protected by the shared-memory guard reservation"
+            instruction.mayDispatchToTrap = false
+            instruction.handlerIdentity = instruction.handlerIdentity.map { "guarded:" + $0 }
+            instructions.append(instruction)
+        }
         return instructions
     }
 

@@ -197,8 +197,10 @@ public struct EngineConfiguration: Sendable {
     public var epochInterruption: Bool
 
     /// FIXME: Make it public once we add mprotect-based bounds checking with JIT.
-    /// Extra reserved bytes after the 4 GiB wasm32 address space for future
-    /// unchecked constant-offset accesses in JIT code.
+    /// Extra reserved bytes after the 4 GiB wasm32 address space. Shared
+    /// memories reserve at least `Memory32GuardedLoad.offsetGuardSize` bytes,
+    /// including when created for an engine with a smaller requested guard,
+    /// so guarded interpreter loads stay safe across imports.
     internal var memoryOffsetGuardSize: Int = 64 * 1024
 
     /// Initializes a new instance of `EngineConfiguration`.

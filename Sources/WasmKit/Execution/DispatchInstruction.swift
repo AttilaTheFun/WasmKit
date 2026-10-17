@@ -467,6 +467,45 @@ extension Execution {
         case 752: return self.execute_i64XorShiftMulPair(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 753: return self.execute_i64XorShiftMulPairReturn(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 755: return self.execute_internalCopy2ArithmeticCall(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 756: return self.execute_i32LoadGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 761: return self.execute_i32LoadWithCopyGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 762: return self.execute_i64LoadGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 767: return self.execute_i64LoadWithCopyGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        // f32LoadGuarded shares i32LoadGuarded's handler body; see Instruction.handlerIdentity
+        case 768: return self.execute_i32LoadGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        // f32LoadWithCopyGuarded shares i32LoadWithCopyGuarded's handler body; see Instruction.handlerIdentity
+        case 773: return self.execute_i32LoadWithCopyGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        // f64LoadGuarded shares i64LoadGuarded's handler body; see Instruction.handlerIdentity
+        case 774: return self.execute_i64LoadGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        // f64LoadWithCopyGuarded shares i64LoadWithCopyGuarded's handler body; see Instruction.handlerIdentity
+        case 779: return self.execute_i64LoadWithCopyGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 780: return self.execute_i32Load8SGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 785: return self.execute_i32Load8SWithCopyGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 786: return self.execute_i32Load8UGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 791: return self.execute_i32Load8UWithCopyGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 792: return self.execute_i32Load16SGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 797: return self.execute_i32Load16SWithCopyGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 798: return self.execute_i32Load16UGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 803: return self.execute_i32Load16UWithCopyGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 804: return self.execute_i64Load8SGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 809: return self.execute_i64Load8SWithCopyGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        // i64Load8UGuarded shares i32Load8UGuarded's handler body; see Instruction.handlerIdentity
+        case 810: return self.execute_i32Load8UGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        // i64Load8UWithCopyGuarded shares i32Load8UWithCopyGuarded's handler body; see Instruction.handlerIdentity
+        case 815: return self.execute_i32Load8UWithCopyGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 816: return self.execute_i64Load16SGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 821: return self.execute_i64Load16SWithCopyGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        // i64Load16UGuarded shares i32Load16UGuarded's handler body; see Instruction.handlerIdentity
+        case 822: return self.execute_i32Load16UGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        // i64Load16UWithCopyGuarded shares i32Load16UWithCopyGuarded's handler body; see Instruction.handlerIdentity
+        case 827: return self.execute_i32Load16UWithCopyGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 828: return self.execute_i64Load32SGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 833: return self.execute_i64Load32SWithCopyGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        // i64Load32UGuarded shares i32LoadGuarded's handler body; see Instruction.handlerIdentity
+        case 834: return self.execute_i32LoadGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        // i64Load32UWithCopyGuarded shares i32LoadWithCopyGuarded's handler body; see Instruction.handlerIdentity
+        case 839: return self.execute_i32LoadWithCopyGuarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 842: return self.execute_i32LoadMemory32Guarded(sp: &sp, pc: &pc, md: &md, ms: &ms)
         default: preconditionFailure("Unknown instruction!?")
 
         }
@@ -7400,6 +7439,1041 @@ sp.pointee[i64: immediate.result] = (first ^ (first &>> UInt64(immediate.shift1)
         let immediate = Instruction.Copy2CallOperand.load(from: &pc.pointee)
         let next: CodeSlot
         (pc.pointee, next) = self.internalCopy2ArithmeticCall(sp: &sp.pointee, pc: pc.pointee, md: &md.pointee, ms: &ms.pointee, immediate: immediate)
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32LoadGuarded") @inline(__always)
+    mutating func execute_i32LoadGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt32.self).littleEndian
+let value: UntypedValue = .i32(raw)
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32LoadToAccGuarded") @inline(__always)
+    mutating func execute_i32LoadToAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt32.self).littleEndian
+let value: UntypedValue = .i32(raw)
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32LoadFromAccGuarded") @inline(__always)
+    mutating func execute_i32LoadFromAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt32.self).littleEndian
+let value: UntypedValue = .i32(raw)
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32LoadInAccGuarded") @inline(__always)
+    mutating func execute_i32LoadInAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryOffsetOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt32.self).littleEndian
+let value: UntypedValue = .i32(raw)
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32LoadToAccAndSlotGuarded") @inline(__always)
+    mutating func execute_i32LoadToAccAndSlotGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt32.self).littleEndian
+let value: UntypedValue = .i32(raw)
+sp.pointee[immediate.result] = value; ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32LoadWithCopyGuarded") @inline(__always)
+    mutating func execute_i32LoadWithCopyGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadWithCopyOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+sp.pointee[immediate.copyDest] = sp.pointee[immediate.pointer]
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt32.self).littleEndian
+let value: UntypedValue = .i32(raw)
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64LoadGuarded") @inline(__always)
+    mutating func execute_i64LoadGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt64.self).littleEndian
+let value: UntypedValue = .i64(raw)
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64LoadToAccGuarded") @inline(__always)
+    mutating func execute_i64LoadToAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt64.self).littleEndian
+let value: UntypedValue = .i64(raw)
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64LoadFromAccGuarded") @inline(__always)
+    mutating func execute_i64LoadFromAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt64.self).littleEndian
+let value: UntypedValue = .i64(raw)
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64LoadInAccGuarded") @inline(__always)
+    mutating func execute_i64LoadInAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryOffsetOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt64.self).littleEndian
+let value: UntypedValue = .i64(raw)
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64LoadToAccAndSlotGuarded") @inline(__always)
+    mutating func execute_i64LoadToAccAndSlotGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt64.self).littleEndian
+let value: UntypedValue = .i64(raw)
+sp.pointee[immediate.result] = value; ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64LoadWithCopyGuarded") @inline(__always)
+    mutating func execute_i64LoadWithCopyGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadWithCopyOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+sp.pointee[immediate.copyDest] = sp.pointee[immediate.pointer]
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt64.self).littleEndian
+let value: UntypedValue = .i64(raw)
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_f32LoadGuarded") @inline(__always)
+    mutating func execute_f32LoadGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt32.self).littleEndian
+let value: UntypedValue = .rawF32(raw)
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_f32LoadToAccGuarded") @inline(__always)
+    mutating func execute_f32LoadToAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt32.self).littleEndian
+let value: UntypedValue = .rawF32(raw)
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_f32LoadFromAccGuarded") @inline(__always)
+    mutating func execute_f32LoadFromAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt32.self).littleEndian
+let value: UntypedValue = .rawF32(raw)
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_f32LoadInAccGuarded") @inline(__always)
+    mutating func execute_f32LoadInAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryOffsetOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt32.self).littleEndian
+let value: UntypedValue = .rawF32(raw)
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_f32LoadToAccAndSlotGuarded") @inline(__always)
+    mutating func execute_f32LoadToAccAndSlotGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt32.self).littleEndian
+let value: UntypedValue = .rawF32(raw)
+sp.pointee[immediate.result] = value; ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_f32LoadWithCopyGuarded") @inline(__always)
+    mutating func execute_f32LoadWithCopyGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadWithCopyOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+sp.pointee[immediate.copyDest] = sp.pointee[immediate.pointer]
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt32.self).littleEndian
+let value: UntypedValue = .rawF32(raw)
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_f64LoadGuarded") @inline(__always)
+    mutating func execute_f64LoadGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt64.self).littleEndian
+let value: UntypedValue = .rawF64(raw)
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_f64LoadToAccGuarded") @inline(__always)
+    mutating func execute_f64LoadToAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt64.self).littleEndian
+let value: UntypedValue = .rawF64(raw)
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_f64LoadFromAccGuarded") @inline(__always)
+    mutating func execute_f64LoadFromAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt64.self).littleEndian
+let value: UntypedValue = .rawF64(raw)
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_f64LoadInAccGuarded") @inline(__always)
+    mutating func execute_f64LoadInAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryOffsetOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt64.self).littleEndian
+let value: UntypedValue = .rawF64(raw)
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_f64LoadToAccAndSlotGuarded") @inline(__always)
+    mutating func execute_f64LoadToAccAndSlotGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt64.self).littleEndian
+let value: UntypedValue = .rawF64(raw)
+sp.pointee[immediate.result] = value; ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_f64LoadWithCopyGuarded") @inline(__always)
+    mutating func execute_f64LoadWithCopyGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadWithCopyOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+sp.pointee[immediate.copyDest] = sp.pointee[immediate.pointer]
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt64.self).littleEndian
+let value: UntypedValue = .rawF64(raw)
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load8SGuarded") @inline(__always)
+    mutating func execute_i32Load8SGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int8.self).littleEndian
+let value: UntypedValue = .init(signed: Int32(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load8SToAccGuarded") @inline(__always)
+    mutating func execute_i32Load8SToAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int8.self).littleEndian
+let value: UntypedValue = .init(signed: Int32(raw))
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load8SFromAccGuarded") @inline(__always)
+    mutating func execute_i32Load8SFromAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int8.self).littleEndian
+let value: UntypedValue = .init(signed: Int32(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load8SInAccGuarded") @inline(__always)
+    mutating func execute_i32Load8SInAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryOffsetOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int8.self).littleEndian
+let value: UntypedValue = .init(signed: Int32(raw))
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load8SToAccAndSlotGuarded") @inline(__always)
+    mutating func execute_i32Load8SToAccAndSlotGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int8.self).littleEndian
+let value: UntypedValue = .init(signed: Int32(raw))
+sp.pointee[immediate.result] = value; ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load8SWithCopyGuarded") @inline(__always)
+    mutating func execute_i32Load8SWithCopyGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadWithCopyOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+sp.pointee[immediate.copyDest] = sp.pointee[immediate.pointer]
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int8.self).littleEndian
+let value: UntypedValue = .init(signed: Int32(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load8UGuarded") @inline(__always)
+    mutating func execute_i32Load8UGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt8.self).littleEndian
+let value: UntypedValue = .i32(UInt32(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load8UToAccGuarded") @inline(__always)
+    mutating func execute_i32Load8UToAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt8.self).littleEndian
+let value: UntypedValue = .i32(UInt32(raw))
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load8UFromAccGuarded") @inline(__always)
+    mutating func execute_i32Load8UFromAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt8.self).littleEndian
+let value: UntypedValue = .i32(UInt32(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load8UInAccGuarded") @inline(__always)
+    mutating func execute_i32Load8UInAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryOffsetOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt8.self).littleEndian
+let value: UntypedValue = .i32(UInt32(raw))
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load8UToAccAndSlotGuarded") @inline(__always)
+    mutating func execute_i32Load8UToAccAndSlotGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt8.self).littleEndian
+let value: UntypedValue = .i32(UInt32(raw))
+sp.pointee[immediate.result] = value; ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load8UWithCopyGuarded") @inline(__always)
+    mutating func execute_i32Load8UWithCopyGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadWithCopyOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+sp.pointee[immediate.copyDest] = sp.pointee[immediate.pointer]
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt8.self).littleEndian
+let value: UntypedValue = .i32(UInt32(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load16SGuarded") @inline(__always)
+    mutating func execute_i32Load16SGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int16.self).littleEndian
+let value: UntypedValue = .init(signed: Int32(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load16SToAccGuarded") @inline(__always)
+    mutating func execute_i32Load16SToAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int16.self).littleEndian
+let value: UntypedValue = .init(signed: Int32(raw))
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load16SFromAccGuarded") @inline(__always)
+    mutating func execute_i32Load16SFromAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int16.self).littleEndian
+let value: UntypedValue = .init(signed: Int32(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load16SInAccGuarded") @inline(__always)
+    mutating func execute_i32Load16SInAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryOffsetOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int16.self).littleEndian
+let value: UntypedValue = .init(signed: Int32(raw))
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load16SToAccAndSlotGuarded") @inline(__always)
+    mutating func execute_i32Load16SToAccAndSlotGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int16.self).littleEndian
+let value: UntypedValue = .init(signed: Int32(raw))
+sp.pointee[immediate.result] = value; ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load16SWithCopyGuarded") @inline(__always)
+    mutating func execute_i32Load16SWithCopyGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadWithCopyOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+sp.pointee[immediate.copyDest] = sp.pointee[immediate.pointer]
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int16.self).littleEndian
+let value: UntypedValue = .init(signed: Int32(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load16UGuarded") @inline(__always)
+    mutating func execute_i32Load16UGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt16.self).littleEndian
+let value: UntypedValue = .i32(UInt32(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load16UToAccGuarded") @inline(__always)
+    mutating func execute_i32Load16UToAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt16.self).littleEndian
+let value: UntypedValue = .i32(UInt32(raw))
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load16UFromAccGuarded") @inline(__always)
+    mutating func execute_i32Load16UFromAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt16.self).littleEndian
+let value: UntypedValue = .i32(UInt32(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load16UInAccGuarded") @inline(__always)
+    mutating func execute_i32Load16UInAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryOffsetOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt16.self).littleEndian
+let value: UntypedValue = .i32(UInt32(raw))
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load16UToAccAndSlotGuarded") @inline(__always)
+    mutating func execute_i32Load16UToAccAndSlotGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt16.self).littleEndian
+let value: UntypedValue = .i32(UInt32(raw))
+sp.pointee[immediate.result] = value; ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32Load16UWithCopyGuarded") @inline(__always)
+    mutating func execute_i32Load16UWithCopyGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadWithCopyOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+sp.pointee[immediate.copyDest] = sp.pointee[immediate.pointer]
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt16.self).littleEndian
+let value: UntypedValue = .i32(UInt32(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load8SGuarded") @inline(__always)
+    mutating func execute_i64Load8SGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int8.self).littleEndian
+let value: UntypedValue = .init(signed: Int64(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load8SToAccGuarded") @inline(__always)
+    mutating func execute_i64Load8SToAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int8.self).littleEndian
+let value: UntypedValue = .init(signed: Int64(raw))
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load8SFromAccGuarded") @inline(__always)
+    mutating func execute_i64Load8SFromAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int8.self).littleEndian
+let value: UntypedValue = .init(signed: Int64(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load8SInAccGuarded") @inline(__always)
+    mutating func execute_i64Load8SInAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryOffsetOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int8.self).littleEndian
+let value: UntypedValue = .init(signed: Int64(raw))
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load8SToAccAndSlotGuarded") @inline(__always)
+    mutating func execute_i64Load8SToAccAndSlotGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int8.self).littleEndian
+let value: UntypedValue = .init(signed: Int64(raw))
+sp.pointee[immediate.result] = value; ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load8SWithCopyGuarded") @inline(__always)
+    mutating func execute_i64Load8SWithCopyGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadWithCopyOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+sp.pointee[immediate.copyDest] = sp.pointee[immediate.pointer]
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int8.self).littleEndian
+let value: UntypedValue = .init(signed: Int64(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load8UGuarded") @inline(__always)
+    mutating func execute_i64Load8UGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt8.self).littleEndian
+let value: UntypedValue = .i64(UInt64(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load8UToAccGuarded") @inline(__always)
+    mutating func execute_i64Load8UToAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt8.self).littleEndian
+let value: UntypedValue = .i64(UInt64(raw))
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load8UFromAccGuarded") @inline(__always)
+    mutating func execute_i64Load8UFromAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt8.self).littleEndian
+let value: UntypedValue = .i64(UInt64(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load8UInAccGuarded") @inline(__always)
+    mutating func execute_i64Load8UInAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryOffsetOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt8.self).littleEndian
+let value: UntypedValue = .i64(UInt64(raw))
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load8UToAccAndSlotGuarded") @inline(__always)
+    mutating func execute_i64Load8UToAccAndSlotGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt8.self).littleEndian
+let value: UntypedValue = .i64(UInt64(raw))
+sp.pointee[immediate.result] = value; ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load8UWithCopyGuarded") @inline(__always)
+    mutating func execute_i64Load8UWithCopyGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadWithCopyOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+sp.pointee[immediate.copyDest] = sp.pointee[immediate.pointer]
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt8.self).littleEndian
+let value: UntypedValue = .i64(UInt64(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load16SGuarded") @inline(__always)
+    mutating func execute_i64Load16SGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int16.self).littleEndian
+let value: UntypedValue = .init(signed: Int64(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load16SToAccGuarded") @inline(__always)
+    mutating func execute_i64Load16SToAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int16.self).littleEndian
+let value: UntypedValue = .init(signed: Int64(raw))
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load16SFromAccGuarded") @inline(__always)
+    mutating func execute_i64Load16SFromAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int16.self).littleEndian
+let value: UntypedValue = .init(signed: Int64(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load16SInAccGuarded") @inline(__always)
+    mutating func execute_i64Load16SInAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryOffsetOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int16.self).littleEndian
+let value: UntypedValue = .init(signed: Int64(raw))
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load16SToAccAndSlotGuarded") @inline(__always)
+    mutating func execute_i64Load16SToAccAndSlotGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int16.self).littleEndian
+let value: UntypedValue = .init(signed: Int64(raw))
+sp.pointee[immediate.result] = value; ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load16SWithCopyGuarded") @inline(__always)
+    mutating func execute_i64Load16SWithCopyGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadWithCopyOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+sp.pointee[immediate.copyDest] = sp.pointee[immediate.pointer]
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int16.self).littleEndian
+let value: UntypedValue = .init(signed: Int64(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load16UGuarded") @inline(__always)
+    mutating func execute_i64Load16UGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt16.self).littleEndian
+let value: UntypedValue = .i64(UInt64(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load16UToAccGuarded") @inline(__always)
+    mutating func execute_i64Load16UToAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt16.self).littleEndian
+let value: UntypedValue = .i64(UInt64(raw))
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load16UFromAccGuarded") @inline(__always)
+    mutating func execute_i64Load16UFromAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt16.self).littleEndian
+let value: UntypedValue = .i64(UInt64(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load16UInAccGuarded") @inline(__always)
+    mutating func execute_i64Load16UInAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryOffsetOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt16.self).littleEndian
+let value: UntypedValue = .i64(UInt64(raw))
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load16UToAccAndSlotGuarded") @inline(__always)
+    mutating func execute_i64Load16UToAccAndSlotGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt16.self).littleEndian
+let value: UntypedValue = .i64(UInt64(raw))
+sp.pointee[immediate.result] = value; ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load16UWithCopyGuarded") @inline(__always)
+    mutating func execute_i64Load16UWithCopyGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadWithCopyOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+sp.pointee[immediate.copyDest] = sp.pointee[immediate.pointer]
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt16.self).littleEndian
+let value: UntypedValue = .i64(UInt64(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load32SGuarded") @inline(__always)
+    mutating func execute_i64Load32SGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int32.self).littleEndian
+let value: UntypedValue = .init(signed: Int64(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load32SToAccGuarded") @inline(__always)
+    mutating func execute_i64Load32SToAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int32.self).littleEndian
+let value: UntypedValue = .init(signed: Int64(raw))
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load32SFromAccGuarded") @inline(__always)
+    mutating func execute_i64Load32SFromAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int32.self).littleEndian
+let value: UntypedValue = .init(signed: Int64(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load32SInAccGuarded") @inline(__always)
+    mutating func execute_i64Load32SInAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryOffsetOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int32.self).littleEndian
+let value: UntypedValue = .init(signed: Int64(raw))
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load32SToAccAndSlotGuarded") @inline(__always)
+    mutating func execute_i64Load32SToAccAndSlotGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int32.self).littleEndian
+let value: UntypedValue = .init(signed: Int64(raw))
+sp.pointee[immediate.result] = value; ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load32SWithCopyGuarded") @inline(__always)
+    mutating func execute_i64Load32SWithCopyGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadWithCopyOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+sp.pointee[immediate.copyDest] = sp.pointee[immediate.pointer]
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: Int32.self).littleEndian
+let value: UntypedValue = .init(signed: Int64(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load32UGuarded") @inline(__always)
+    mutating func execute_i64Load32UGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt32.self).littleEndian
+let value: UntypedValue = .i64(UInt64(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load32UToAccGuarded") @inline(__always)
+    mutating func execute_i64Load32UToAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt32.self).littleEndian
+let value: UntypedValue = .i64(UInt64(raw))
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load32UFromAccGuarded") @inline(__always)
+    mutating func execute_i64Load32UFromAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt32.self).littleEndian
+let value: UntypedValue = .i64(UInt64(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load32UInAccGuarded") @inline(__always)
+    mutating func execute_i64Load32UInAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryOffsetOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt32.self).littleEndian
+let value: UntypedValue = .i64(UInt64(raw))
+ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load32UToAccAndSlotGuarded") @inline(__always)
+    mutating func execute_i64Load32UToAccAndSlotGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt32.self).littleEndian
+let value: UntypedValue = .i64(UInt64(raw))
+sp.pointee[immediate.result] = value; ireg.pointee = value.storage
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i64Load32UWithCopyGuarded") @inline(__always)
+    mutating func execute_i64Load32UWithCopyGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.LoadWithCopyOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+sp.pointee[immediate.copyDest] = sp.pointee[immediate.pointer]
+let raw = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt32.self).littleEndian
+let value: UntypedValue = .i64(UInt64(raw))
+sp.pointee[immediate.result] = value
+        return next
+    }
+    @_silgen_name("wasmkit_execute_f64LoadToFAccGuarded") @inline(__always)
+    mutating func execute_f64LoadToFAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, freg: UnsafeMutablePointer<Double>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+freg.pointee = Double(bitPattern: md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt64.self).littleEndian)
+        return next
+    }
+    @_silgen_name("wasmkit_execute_f64LoadFromAccToFAccGuarded") @inline(__always)
+    mutating func execute_f64LoadFromAccToFAccGuarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>, ireg: UnsafeMutablePointer<UInt64>, freg: UnsafeMutablePointer<Double>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryOffsetOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(UInt32(truncatingIfNeeded: ireg.pointee)) &+ UInt64(immediate.offset)
+freg.pointee = Double(bitPattern: md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt64.self).littleEndian)
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32LoadMemory32Guarded") @inline(__always)
+    mutating func execute_i32LoadMemory32Guarded(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.AccMemoryPointerResultOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        let address = UInt64(sp.pointee[i32: immediate.pointer]) &+ UInt64(immediate.offset)
+sp.pointee[i32: immediate.result] = md.pointee.unsafelyUnwrapped.loadUnaligned(fromByteOffset: Int(bitPattern: UInt(truncatingIfNeeded: address)), as: UInt32.self).littleEndian
         return next
     }
 }

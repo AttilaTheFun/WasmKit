@@ -2093,7 +2093,10 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         }
 
         /// The head slot of `instruction`, which must be one this builder may emit.
+        var useGuardedLoads = false
+
         private func headSlot(of instruction: Instruction) -> CodeSlot {
+            let instruction = useGuardedLoads ? (instruction.guardedMemoryLoad() ?? instruction) : instruction
             assert(emitsDirectOnlyInstructions || !instruction.isDirectThreadedOnly, "\(instruction) is direct-threaded only")
             return instruction.headSlot(threadingModel: engineConfiguration.threadingModel)
         }
@@ -2671,6 +2674,7 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
     var module: InternalInstance
     /// The fuel region being translated, when the engine meters fuel; `nil` otherwise.
     private var fuelRegion: FuelRegion?
+    private let usesGuardedMemory0Loads: Bool
     private var iseqBuilder: ISeqBuilder
     var controlStack: ControlStack
     var valueStack: ValueStack
@@ -2758,7 +2762,13 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         self.engineConfiguration = engineConfiguration
         self.type = type
         self.module = module
+        self.usesGuardedMemory0Loads = engineConfiguration.threadingModel == .direct
+            && engineConfiguration.memoryBoundsChecking == .mprotect
+            && !module.isDebuggable && !isIntercepting
+            && module.memories.first?.limit.shared == true
+            && module.memories.first?.limit.isMemory64 == false
         self.iseqBuilder = ISeqBuilder(engineConfiguration: engineConfiguration, isDebuggable: module.isDebuggable)
+        self.iseqBuilder.useGuardedLoads = usesGuardedMemory0Loads
         self.controlStack = ControlStack()
         let locals = try module.typeCanonicalizer.canonicalize(locals)
         self.stackLayout = try StackLayout(
@@ -4813,6 +4823,7 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
     private mutating func beginMemoryAccess(_ memory: UInt32) throws(WasmKitError) -> Bool {
         let isMemory64 = try module.isMemory64(memoryIndex: memory)
         if memory != 0 {
+            iseqBuilder.useGuardedLoads = false
             emitSelectMemory(memory, accessing: memory)
         }
         return isMemory64
@@ -4821,6 +4832,7 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
     private mutating func endMemoryAccess(_ memory: UInt32) {
         guard memory != 0 else { return }
         emitSelectMemory(0, accessing: memory)
+        iseqBuilder.useGuardedLoads = usesGuardedMemory0Loads
     }
 
     /// Emits the switch of the current memory to `target` around an access to
