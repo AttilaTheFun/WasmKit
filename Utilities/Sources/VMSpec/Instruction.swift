@@ -1965,6 +1965,7 @@ extension VMGen {
         }
         addBranch.useIreg = .write
         instructions.append(addBranch)
+        instructions.append(Instruction(name: "internalCopy2ArithmeticCall", documentation: "Copy two arguments and execute an exact two-instruction arithmetic callee", isControl: true, mayUpdateFrame: true, useCurrentMemory: .write, immediateLayout: .copy2Call))
         return instructions
     }
 

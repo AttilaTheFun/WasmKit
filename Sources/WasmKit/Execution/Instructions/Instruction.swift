@@ -2450,6 +2450,8 @@ enum Instruction {
     case i64XorShiftMulPairReturn(Instruction.I64XorShiftMulPairReturnOperand)
     /// Wrapping immediate add retaining its result followed by a conditional branch
     case i32AddImmBrIf(Instruction.I32AddImmBrIfOperand)
+    /// Copy two arguments and execute an exact two-instruction arithmetic callee
+    case internalCopy2ArithmeticCall(Instruction.Copy2CallOperand)
 }
 
 extension Instruction {
@@ -4703,6 +4705,7 @@ extension Instruction {
         case .i64XorShiftMulPair(let immediate): return immediate
         case .i64XorShiftMulPairReturn(let immediate): return immediate
         case .i32AddImmBrIf(let immediate): return immediate
+        case .internalCopy2ArithmeticCall(let immediate): return immediate
         default: return nil
         }
     }
@@ -5455,6 +5458,7 @@ extension Instruction {
         case .i64XorShiftMulPair(let immediate): immediate.emit(to: emit)
         case .i64XorShiftMulPairReturn(let immediate): immediate.emit(to: emit)
         case .i32AddImmBrIf(let immediate): immediate.emit(to: emit)
+        case .internalCopy2ArithmeticCall(let immediate): immediate.emit(to: emit)
         default: return
         }
     }
@@ -6219,13 +6223,14 @@ extension Instruction {
         case .i64XorShiftReturn: return 751
         case .i64XorShiftMulPair: return 752
         case .i64XorShiftMulPairReturn: return 753
-        default: return 754  // .i32AddImmBrIf
+        case .i32AddImmBrIf: return 754
+        default: return 755  // .internalCopy2ArithmeticCall
         }
     }
 }
 extension Instruction {
     /// The number of opcodes, trap pseudo-instructions included.
-    static let opcodeCount = 755
+    static let opcodeCount = 756
 
     /// Whether only the direct-threaded dispatcher implements this instruction;
     /// `Execution.doExecute` has no case for it.
@@ -7003,6 +7008,7 @@ extension Instruction {
         case 752: return .i64XorShiftMulPair(Instruction.I64XorShiftMulPairOperand.load(from: &pc))
         case 753: return .i64XorShiftMulPairReturn(Instruction.I64XorShiftMulPairReturnOperand.load(from: &pc))
         case 754: return .i32AddImmBrIf(Instruction.I32AddImmBrIfOperand.load(from: &pc))
+        case 755: return .internalCopy2ArithmeticCall(Instruction.Copy2CallOperand.load(from: &pc))
         default: fatalError("Unknown instruction opcode: \(opcode)")
         }
     }
@@ -7772,6 +7778,7 @@ extension Instruction {
         case 752: return "i64XorShiftMulPair"
         case 753: return "i64XorShiftMulPairReturn"
         case 754: return "i32AddImmBrIf"
+        case 755: return "internalCopy2ArithmeticCall"
         default: fatalError("Unknown instruction index: \(opcode)")
         }
     }

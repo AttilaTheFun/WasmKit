@@ -468,3 +468,25 @@ extension EntityHandle<WasmFunctionEntity> {
     var codeSize: Int { withValue { $0.codeSize } }
     var code: CodeBody { withValue { $0.code } }
 }
+
+
+extension InstructionSequence {
+    /// Match the complete body, not a prefix: instrumentation, branch targets,
+    /// and any additional observable operation must keep ordinary dispatch.
+    var isDirectAddMixReturn: Bool {
+        // add: head + one operand; fused return: head + three operands.
+        guard instructions.count == 6 || instructions.count == 7 else { return false }
+        // Finalization can append an unreachable terminal return.
+        if instructions.count == 7 {
+            guard instructions[6] == Instruction._return(.init()).headSlotInline(threadingModel: .direct) else { return false }
+        }
+        let zero = VReg(slotIndex: 0)
+        let add = Instruction.i64Add(.init(lhs: zero, rhs: zero, result: LVReg(zero)))
+        let ret = Instruction.i64XorShiftMulPairReturn(.init(
+            result0: zero, result1: zero, result: zero, input: zero,
+            multiplier0: zero, multiplier1: zero, shift0: 0, shift1: 0,
+            shift2: 0, dest: LVReg(zero)))
+        return instructions[0] == add.headSlotInline(threadingModel: .direct)
+            && instructions[2] == ret.headSlotInline(threadingModel: .direct)
+    }
+}
