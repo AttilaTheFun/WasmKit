@@ -21,7 +21,12 @@ import WAT
                             local.get 2 local.get 2 i64.const 31 i64.shr_u i64.xor)
                           (func (export "run") (param i64 i64) (result i64)
                             local.get 0 local.get 1 call $mix)
-                          (func (export "seen") (result i64) global.get $seen))
+                          (func (export "seen") (result i64) global.get $seen)
+                          (func (export "nested") (param i64 i64) (result i64) (local i64)
+                            local.get 0 i64.const 123456 i64.xor local.set 2
+                            local.get 0 local.get 1 call $mix
+                            local.get 1 call $mix
+                            local.get 2 i64.xor))
                         """))
                     let store = Store(engine: Engine(configuration: .init(
                         threadingModel: threadingModel, compilationMode: mode, fuelMetering: metered)))
@@ -33,7 +38,13 @@ import WAT
                             let sum = x &+ salt
                             let first = (sum ^ (sum &>> 17)) &* 0xbf58476d1ce4e5b9
                             let second = (first ^ (first &>> 27)) &* 0x94d049bb133111eb
-                            #expect(try run([.i64(x), .i64(salt)]) == [.i64(second ^ (second &>> 31))])
+                            let mixed = second ^ (second &>> 31)
+                            #expect(try run([.i64(x), .i64(salt)]) == [.i64(mixed)])
+                            let nestedInput = mixed &+ salt
+                            let nestedFirst = (nestedInput ^ (nestedInput &>> 17)) &* 0xbf58476d1ce4e5b9
+                            let nestedSecond = (nestedFirst ^ (nestedFirst &>> 27)) &* 0x94d049bb133111eb
+                            let nestedExpected = (nestedSecond ^ (nestedSecond &>> 31)) ^ (x ^ 123456)
+                            #expect(try instance.exports[function: "nested"]!([.i64(x), .i64(salt)]) == [.i64(nestedExpected)])
                         }
                     }
                     #expect(try instance.exports[function: "seen"]!([]) == [.i64(sideEffect ? 9 : 0)])

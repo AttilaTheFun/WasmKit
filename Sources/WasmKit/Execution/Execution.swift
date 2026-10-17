@@ -132,6 +132,17 @@ struct Execution: ~Copyable {
         }
     }
 
+    /// Initialize storage for an inlined arithmetic callee without making it
+    /// the current frame. Keep the ordinary small-frame and stack-limit checks.
+    @inline(__always)
+    func prepareArithmeticFrame(sp: Sp, iseq: InstructionSequence) -> Bool {
+        let savedSlots = -StackLayout.numberOfSavingSlots * MemoryLayout<UntypedValue>.stride
+        guard _fastPath(iseq.frameInitOffset >= savedSlots - 128),
+              _fastPath(sp.advanced(by: iseq.maxStackHeight) < stackEnd) else { return false }
+        initializeSmallFrame(sp: sp, iseq: iseq)
+        return true
+    }
+
     @inline(__always)
     private func initializeSmallFrame(sp: Sp, iseq: InstructionSequence) {
         // The image has the same offsets from its anchor as from `sp`: it starts

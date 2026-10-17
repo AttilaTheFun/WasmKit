@@ -243,8 +243,9 @@ extension Execution {
         return try internalCallSlow(sp: &sp, pc: pc, immediate: call)
     }
 
-    /// Execute only a body recognized when the call site was patched. The
-    /// ordinary frame and bounds checks are retained; only dispatches disappear.
+    /// A recognized arithmetic body cannot trap or call out. Keep its locals,
+    /// constants, operand stores and stack limit, but leave the caller current:
+    /// no observable operation needs saved callee-frame metadata.
     @inline(__always)
     mutating func internalCopy2ArithmeticCall(sp: inout Sp, pc: Pc, md: inout Md, ms: inout Ms, immediate: Instruction.Copy2CallOperand) -> (Pc, CodeSlot) {
         let value0 = sp[immediate.source0]
@@ -252,18 +253,25 @@ extension Execution {
         sp[immediate.dest0] = value0
         sp[immediate.dest1] = value1
         let call = Instruction.CallOperand(rawCallee: immediate.rawCallee, arguments: immediate.arguments, spAddend: immediate.spAddend)
-        let (iseq, function) = call.callee.assumeCompiled()
-        let newSp = sp.advanced(by: immediate.spAddend)
-        guard pushSmallFrame(iseq: iseq, function: function, sp: sp, newSp: newSp, returnPC: pc) else {
+        let (iseq, _) = call.callee.assumeCompiled()
+        let calleeSp = sp.advanced(by: immediate.spAddend)
+        guard prepareArithmeticFrame(sp: calleeSp, iseq: iseq) else {
             return (pc.advanced(by: -2), store.value.engine.internalCallSlowSlot)
         }
-        sp = newSp
         var body = iseq.baseAddress.advanced(by: 1)
         let add = Instruction.BinaryOperand.load(from: &body)
-        sp[i64: add.result] = sp[i64: add.lhs] &+ sp[i64: add.rhs]
+        calleeSp[i64: add.result] = calleeSp[i64: add.lhs] &+ calleeSp[i64: add.rhs]
         body = body.advanced(by: 1)
         let finish = Instruction.I64XorShiftMulPairReturnOperand.load(from: &body)
-        return i64XorShiftMulPairReturn(sp: &sp, pc: pc, md: &md, ms: &ms, immediate: finish)
+        let input = calleeSp[i64: finish.input]
+        let first = (input ^ (input &>> UInt64(finish.shift0))) &* calleeSp[i64: finish.multiplier0]
+        calleeSp[i64: finish.result0] = first
+        let second = (first ^ (first &>> UInt64(finish.shift1))) &* calleeSp[i64: finish.multiplier1]
+        calleeSp[i64: finish.result1] = second
+        calleeSp[i64: finish.result] = second ^ (second &>> finish.shift2)
+        calleeSp[finish.dest] = calleeSp[finish.result]
+        var pc = pc
+        return pc.next()
     }
 
     @inline(__always)
