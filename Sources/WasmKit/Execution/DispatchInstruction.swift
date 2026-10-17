@@ -467,6 +467,7 @@ extension Execution {
         case 752: return self.execute_i64XorShiftMulPair(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 753: return self.execute_i64XorShiftMulPairReturn(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 755: return self.execute_internalCopy2ArithmeticCall(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 756: return self.execute_byteCompareReturn(sp: &sp, pc: &pc, md: &md, ms: &ms)
         default: preconditionFailure("Unknown instruction!?")
 
         }
@@ -7400,6 +7401,13 @@ sp.pointee[i64: immediate.result] = (first ^ (first &>> UInt64(immediate.shift1)
         let immediate = Instruction.Copy2CallOperand.load(from: &pc.pointee)
         let next: CodeSlot
         (pc.pointee, next) = self.internalCopy2ArithmeticCall(sp: &sp.pointee, pc: pc.pointee, md: &md.pointee, ms: &ms.pointee, immediate: immediate)
+        return next
+    }
+    @_silgen_name("wasmkit_execute_byteCompareReturn") @inline(__always)
+    mutating func execute_byteCompareReturn(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.ByteCompareReturnOperand.load(from: &pc.pointee)
+        let next: CodeSlot
+        (pc.pointee, next) = self.byteCompareReturn(sp: &sp.pointee, pc: pc.pointee, md: &md.pointee, ms: &ms.pointee, immediate: immediate)
         return next
     }
 }

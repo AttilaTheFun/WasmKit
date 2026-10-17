@@ -2452,6 +2452,8 @@ enum Instruction {
     case i32AddImmBrIf(Instruction.I32AddImmBrIfOperand)
     /// Copy two arguments and execute an exact two-instruction arithmetic callee
     case internalCopy2ArithmeticCall(Instruction.Copy2CallOperand)
+    /// Compare an in-bounds unsigned-byte range and return; otherwise execute the original loop
+    case byteCompareReturn(Instruction.ByteCompareReturnOperand)
 }
 
 extension Instruction {
@@ -3957,6 +3959,22 @@ extension Instruction {
             emitSlot { unsafeBitCast(($0.offset, 0, 0, 0, 0) as (Int32, UInt8, UInt8, UInt8, UInt8), to: CodeSlot.self) }
         }
     }
+
+    struct ByteCompareReturnOperand: InstructionImmediate {
+        var lhs: VReg
+        var rhs: VReg
+        var count: VReg
+        var result: LVReg
+        @inline(__always) static func load(from pc: inout Pc) -> Self {
+            let (lhs, rhs, count, _, _) = pc.read((VReg, VReg, VReg, UInt8, UInt8).self)
+            let (result, _, _, _, _) = pc.read((LVReg, UInt8, UInt8, UInt8, UInt8).self)
+            return Self(lhs: lhs, rhs: rhs, count: count, result: result)
+        }
+        @inline(__always) static func emit(to emitSlot: ((Self) -> CodeSlot) -> Void) {
+            emitSlot { unsafeBitCast(($0.lhs, $0.rhs, $0.count, 0, 0) as (VReg, VReg, VReg, UInt8, UInt8), to: CodeSlot.self) }
+            emitSlot { unsafeBitCast(($0.result, 0, 0, 0, 0) as (LVReg, UInt8, UInt8, UInt8, UInt8), to: CodeSlot.self) }
+        }
+    }
 }
 
 extension Instruction {
@@ -4706,6 +4724,7 @@ extension Instruction {
         case .i64XorShiftMulPairReturn(let immediate): return immediate
         case .i32AddImmBrIf(let immediate): return immediate
         case .internalCopy2ArithmeticCall(let immediate): return immediate
+        case .byteCompareReturn(let immediate): return immediate
         default: return nil
         }
     }
@@ -5459,6 +5478,7 @@ extension Instruction {
         case .i64XorShiftMulPairReturn(let immediate): immediate.emit(to: emit)
         case .i32AddImmBrIf(let immediate): immediate.emit(to: emit)
         case .internalCopy2ArithmeticCall(let immediate): immediate.emit(to: emit)
+        case .byteCompareReturn(let immediate): immediate.emit(to: emit)
         default: return
         }
     }
@@ -6224,13 +6244,14 @@ extension Instruction {
         case .i64XorShiftMulPair: return 752
         case .i64XorShiftMulPairReturn: return 753
         case .i32AddImmBrIf: return 754
-        default: return 755  // .internalCopy2ArithmeticCall
+        case .internalCopy2ArithmeticCall: return 755
+        default: return 756  // .byteCompareReturn
         }
     }
 }
 extension Instruction {
     /// The number of opcodes, trap pseudo-instructions included.
-    static let opcodeCount = 756
+    static let opcodeCount = 757
 
     /// Whether only the direct-threaded dispatcher implements this instruction;
     /// `Execution.doExecute` has no case for it.
@@ -7009,6 +7030,7 @@ extension Instruction {
         case 753: return .i64XorShiftMulPairReturn(Instruction.I64XorShiftMulPairReturnOperand.load(from: &pc))
         case 754: return .i32AddImmBrIf(Instruction.I32AddImmBrIfOperand.load(from: &pc))
         case 755: return .internalCopy2ArithmeticCall(Instruction.Copy2CallOperand.load(from: &pc))
+        case 756: return .byteCompareReturn(Instruction.ByteCompareReturnOperand.load(from: &pc))
         default: fatalError("Unknown instruction opcode: \(opcode)")
         }
     }
@@ -7779,6 +7801,7 @@ extension Instruction {
         case 753: return "i64XorShiftMulPairReturn"
         case 754: return "i32AddImmBrIf"
         case 755: return "internalCopy2ArithmeticCall"
+        case 756: return "byteCompareReturn"
         default: fatalError("Unknown instruction index: \(opcode)")
         }
     }

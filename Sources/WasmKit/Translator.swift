@@ -3349,6 +3349,17 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         // entering an `if` arm is charged once, here, before any of it runs.
         emitEpochCheck()
         openFuelRegion()
+        if !isIntercepting, !module.isDebuggable,
+            !engineConfiguration.fuelMetering, !engineConfiguration.epochInterruption,
+            stackLayout.parameterArea.type.parameters == [.i32, .i32, .i32],
+            stackLayout.parameterArea.type.results == [.i32],
+            code.locals == [.i32, .i32, .i32],
+            code.expression.elementsEqual(Self.byteComparisonBody),
+            try !module.isMemory64(memoryIndex: 0) {
+            emit(.byteCompareReturn(.init(
+                lhs: stackLayout.localReg(0), rhs: stackLayout.localReg(1),
+                count: stackLayout.localReg(2), result: LVReg(stackLayout.localReg(0)))))
+        }
         var parser = ExpressionParser(code: code)
         while let visit = try WasmKitError.wrap({ () throws(WasmParserError) in try parser.parse() }) {
             chargeFuelForOperator()

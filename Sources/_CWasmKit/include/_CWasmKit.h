@@ -201,3 +201,5 @@ static inline void wasmkit_free(void *WASMKIT_NULLABLE ptr) {
 }
 
 #endif // WASMKIT__CWASMKIT_H
+
+int32_t wasmkit_compare_bytes(const void *lhs, const void *rhs, size_t count);

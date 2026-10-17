@@ -1966,6 +1966,12 @@ extension VMGen {
         addBranch.useIreg = .write
         instructions.append(addBranch)
         instructions.append(Instruction(name: "internalCopy2ArithmeticCall", documentation: "Copy two arguments and execute an exact two-instruction arithmetic callee", isControl: true, mayUpdateFrame: true, useCurrentMemory: .write, immediateLayout: .copy2Call))
+        instructions.append(Instruction(name: "byteCompareReturn", documentation: "Compare an in-bounds unsigned-byte range and return; otherwise execute the original loop", isControl: true, mayUpdateFrame: true, useCurrentMemory: .write) {
+            $0.field(name: "lhs", type: .VReg)
+            $0.field(name: "rhs", type: .VReg)
+            $0.field(name: "count", type: .VReg)
+            $0.field(name: "result", type: .LVReg)
+        })
         return instructions
     }
 

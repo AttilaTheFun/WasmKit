@@ -1,6 +1,29 @@
+import _CWasmKit
+
 /// > Note:
 /// <https://webassembly.github.io/spec/core/exec/instructions.html#control-instructions>
 extension Execution {
+    @inline(__always)
+    mutating func byteCompareReturn(sp: inout Sp, pc: Pc, md: inout Md, ms: inout Ms, immediate: Instruction.ByteCompareReturnOperand) -> (Pc, CodeSlot) {
+        let count = UInt(sp[i32: immediate.count])
+        if count == 0 {
+            sp[i32: immediate.result] = 0
+            return _return(sp: &sp, pc: pc, md: &md, ms: &ms)
+        }
+        let lhs = UInt(sp[i32: immediate.lhs])
+        let rhs = UInt(sp[i32: immediate.rhs])
+        // Shared memories cache their reservation in `ms`. Read the committed
+        // size instead: reading ahead must never turn an early mismatch into a
+        // guard-page fault. Concurrent growth can only make this conservative.
+        let limit = currentInstance(sp: sp).memories[0].withValue { UInt($0.byteCount) }
+        guard lhs <= limit, rhs <= limit, count <= limit - lhs, count <= limit - rhs, let memory = md else {
+            var pc = pc
+            return pc.next()
+        }
+        sp[i32: immediate.result] = UInt32(bitPattern: wasmkit_compare_bytes(memory + Int(lhs), memory + Int(rhs), Int(count)))
+        return _return(sp: &sp, pc: pc, md: &md, ms: &ms)
+    }
+
     func unreachable(sp: Sp, pc: Pc) throws -> (Pc, CodeSlot) {
         throw Trap(.unreachable)
     }
