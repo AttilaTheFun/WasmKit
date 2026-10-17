@@ -92,9 +92,10 @@ extension Execution {
         let first = (input ^ (input &>> UInt64(immediate.shift0))) &* sp[i64: immediate.multiplier0]
         sp[i64: immediate.result0] = first
         let second = (first ^ (first &>> UInt64(immediate.shift1))) &* sp[i64: immediate.multiplier1]
-        sp[i64: immediate.result1] = second
-        sp[i64: immediate.result] = second ^ (second &>> immediate.shift2)
-        sp[immediate.dest] = sp[immediate.result]
+        // This instruction returns immediately: only the ABI result slot
+        // survives the frame. Keep the first write above because multiplier1
+        // may alias result0, but avoid materializing the dead final temporaries.
+        sp[i64: immediate.dest] = second ^ (second &>> immediate.shift2)
         return _return(sp: &sp, pc: pc, md: &md, ms: &ms)
     }
 

@@ -4,6 +4,34 @@ import WAT
 
 @Suite struct XorMultiplyPairReturnTests {
     @Test(arguments: [EngineConfiguration.ThreadingModel.direct, .token])
+    func aliasedMultiplierAndLiveSiblingResult(threadingModel: EngineConfiguration.ThreadingModel) throws {
+        let module = try parseWasm(bytes: wat2wasm("""
+            (module
+              (func (export "alias") (param i64 i64 i64) (result i64) (local i64)
+                local.get 0 local.get 0 i64.const 17 i64.shr_u i64.xor local.get 1 i64.mul local.set 2
+                local.get 2 local.get 2 i64.const 27 i64.shr_u i64.xor local.get 2 i64.mul local.set 3
+                local.get 3 local.get 3 i64.const 31 i64.shr_u i64.xor)
+              (func (export "sibling") (param i64 i64) (result i64 i64) (local i64 i64)
+                local.get 0 local.get 0 i64.const 17 i64.shr_u i64.xor local.get 1 i64.mul local.set 2
+                local.get 2
+                local.get 2 local.get 2 i64.const 27 i64.shr_u i64.xor local.get 2 i64.mul local.set 3
+                local.get 3 local.get 3 i64.const 31 i64.shr_u i64.xor))
+            """))
+        for mode in [EngineConfiguration.CompilationMode.lazy, .eager] {
+            let store = Store(engine: Engine(configuration: .init(threadingModel: threadingModel, compilationMode: mode)))
+            let instance = try module.instantiate(store: store)
+            for x: UInt64 in [0, 1, .max, 0x123456789abcdef0] {
+                let multiplier: UInt64 = 0xbf58476d1ce4e5b9
+                let first = (x ^ (x &>> 17)) &* multiplier
+                let second = (first ^ (first &>> 27)) &* first
+                let final = second ^ (second &>> 31)
+                #expect(try instance.exports[function: "alias"]!([.i64(x), .i64(multiplier), .i64(7)]) == [.i64(final)])
+                #expect(try instance.exports[function: "sibling"]!([.i64(x), .i64(multiplier)]) == [.i64(first), .i64(final)])
+            }
+        }
+    }
+
+    @Test(arguments: [EngineConfiguration.ThreadingModel.direct, .token])
     func wrappingReturnsAndMemoryRestoration(threadingModel: EngineConfiguration.ThreadingModel) throws {
         for shift: UInt64 in [0, 17, 63, 64, 129] {
             let prefix = """
