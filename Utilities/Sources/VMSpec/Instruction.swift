@@ -1976,6 +1976,17 @@ extension VMGen {
         }
         retry.mayDispatchToTrap = true
         instructions.append(retry)
+        var update = Instruction(name: "i32AtomicCmpxchgUpdate", documentation: "Load and update a signed count with compare-exchange retries", useCurrentMemory: .read) {
+            $0.field(name: "pointer", type: .VReg)
+            $0.field(name: "expected", type: .VReg)
+            $0.field(name: "replacement", type: .VReg)
+            $0.field(name: "observed", type: .VReg)
+            $0.field(name: "delta", type: .Int32)
+            $0.field(name: "result", type: .VReg)
+            $0.field(name: "offset", type: .UInt32)
+        }
+        update.mayDispatchToTrap = true
+        instructions.append(update)
         return instructions
     }
 

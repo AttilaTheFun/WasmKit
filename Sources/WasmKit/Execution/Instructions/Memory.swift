@@ -559,6 +559,26 @@ extension Execution {
         return nil
     }
 
+    mutating func i32AtomicCmpxchgUpdate(sp: Sp, md: Md, ms: Ms, immediate: Instruction.I32AtomicCmpxchgUpdateOperand) -> MemoryAccessTrap? {
+        let address = UInt64(sp[i32: immediate.expected]) + UInt64(immediate.offset)
+        if _slowPath(address % 4 != 0) { return .unalignedAtomic }
+        if _slowPath(address + 4 > UInt64(ms)) { return .outOfBounds }
+        let pointer = md.unsafelyUnwrapped.advanced(by: Execution.checkedByteOffset(address))
+        let expected = wasmkit_atomic_load_32(pointer)
+        let replacement = expected &+ UInt32(bitPattern: immediate.delta)
+        sp[i32: immediate.expected] = expected
+        sp[i32: immediate.replacement] = replacement
+        if Int32(bitPattern: replacement) < 0 {
+            sp[i32: immediate.observed] = expected
+            sp[i32: immediate.result] = 0
+            return nil
+        }
+        return i32AtomicCmpxchgRetry(sp: sp, md: md, ms: ms, immediate: .init(
+            pointer: immediate.pointer, expected: immediate.expected,
+            replacement: immediate.replacement, observed: immediate.observed,
+            delta: immediate.delta, result: immediate.result))
+    }
+
     mutating func i32AtomicCmpxchgRetry(sp: Sp, md: Md, ms: Ms, immediate: Instruction.I32AtomicCmpxchgRetryOperand) -> MemoryAccessTrap? {
         let address = UInt64(sp[i32: immediate.pointer])
         if _slowPath(address % 4 != 0) { return .unalignedAtomic }

@@ -122,6 +122,9 @@ enum VMGen {
 
     static func generateBasicInstImplementations() -> [String: String] {
         var inlineImpls: [String: String] = [:]
+        inlineImpls["i32AtomicCmpxchgUpdate"] = """
+            if let trap = self.i32AtomicCmpxchgUpdate(sp: sp.pointee, md: md.pointee, ms: ms.pointee, immediate: immediate) { %TRAP% }
+            """
         inlineImpls["i32AtomicCmpxchgRetry"] = """
             if let trap = self.i32AtomicCmpxchgRetry(sp: sp.pointee, md: md.pointee, ms: ms.pointee, immediate: immediate) { %TRAP% }
             """

@@ -468,6 +468,7 @@ extension Execution {
         case 753: return self.execute_i64XorShiftMulPairReturn(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 755: return self.execute_internalCopy2ArithmeticCall(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 756: return try self.executeToken_i32AtomicCmpxchgRetry(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 757: return try self.executeToken_i32AtomicCmpxchgUpdate(sp: &sp, pc: &pc, md: &md, ms: &ms)
         default: preconditionFailure("Unknown instruction!?")
 
         }
@@ -1309,6 +1310,14 @@ extension Execution {
     mutating func executeToken_i32AtomicCmpxchgRetry(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) throws -> CodeSlot {
         let immediate = Instruction.I32AtomicCmpxchgRetryOperand.load(from: &pc.pointee)
         if let trap = self.i32AtomicCmpxchgRetry(sp: sp.pointee, md: md.pointee, ms: ms.pointee, immediate: immediate) { try trap.raise() }
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        return next
+    }
+    @inline(__always)
+    mutating func executeToken_i32AtomicCmpxchgUpdate(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) throws -> CodeSlot {
+        let immediate = Instruction.I32AtomicCmpxchgUpdateOperand.load(from: &pc.pointee)
+        if let trap = self.i32AtomicCmpxchgUpdate(sp: sp.pointee, md: md.pointee, ms: ms.pointee, immediate: immediate) { try trap.raise() }
         let next = pc.pointee.pointee
         pc.pointee = pc.pointee.advanced(by: 1)
         return next
@@ -7417,6 +7426,14 @@ sp.pointee[i64: immediate.result] = (first ^ (first &>> UInt64(immediate.shift1)
         let next = pc.pointee.pointee
         pc.pointee = pc.pointee.advanced(by: 1)
         if let trap = self.i32AtomicCmpxchgRetry(sp: sp.pointee, md: md.pointee, ms: ms.pointee, immediate: immediate) { return trap.directThreadedHeadSlot }
+        return next
+    }
+    @_silgen_name("wasmkit_execute_i32AtomicCmpxchgUpdate") @inline(__always)
+    mutating func execute_i32AtomicCmpxchgUpdate(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.I32AtomicCmpxchgUpdateOperand.load(from: &pc.pointee)
+        let next = pc.pointee.pointee
+        pc.pointee = pc.pointee.advanced(by: 1)
+        if let trap = self.i32AtomicCmpxchgUpdate(sp: sp.pointee, md: md.pointee, ms: ms.pointee, immediate: immediate) { return trap.directThreadedHeadSlot }
         return next
     }
 }

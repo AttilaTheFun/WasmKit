@@ -3372,6 +3372,40 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         retryEnds[retryExpressionOffset + pattern.end - retryExpression.startIndex] = fail
     }
 
+    private mutating func emitAtomicUpdateIfMatched() throws(WasmKitError) {
+        guard !isIntercepting, !module.isDebuggable,
+            !engineConfiguration.fuelMetering, !engineConfiguration.epochInterruption,
+            let update = AtomicUpdatePattern.match(retryExpression,
+                at: retryExpression.startIndex + binaryOffset - retryExpressionOffset),
+            try !module.isMemory64(memoryIndex: 0) else { return }
+        let pattern = update.retry
+        // The retry loop adds one level inside this enclosing block.
+        let depth = pattern.successDepth - 1
+        let target = try controlStack.branchTarget(relativeDepth: depth)
+        guard case .block(root: false) = target.kind, target.copySlotCount == 0,
+            target.valueStackHeight == valueStack.valueHeight,
+            controlStack.catchHandlersToUnwind(relativeDepth: depth) == 0 else { return }
+        for index in [pattern.pointer, pattern.expected, pattern.replacement, pattern.observed] {
+            guard try locals.type(of: index) == .i32, !stackLayout.isWideLocal(index) else { return }
+        }
+        let result = valueStack.push(.i32)
+        _ = try valueStack.pop(.i32)
+        emit(.i32AtomicCmpxchgUpdate(.init(
+            pointer: stackLayout.localReg(pattern.pointer), expected: stackLayout.localReg(pattern.expected),
+            replacement: stackLayout.localReg(pattern.replacement), observed: stackLayout.localReg(pattern.observed),
+            delta: pattern.delta, result: result, offset: update.offset)))
+        let fail = iseqBuilder.allocLabel()
+        let oldPC = iseqBuilder.insertingPC
+        iseqBuilder.emitWithLabel(Instruction.brIf, target.continuation) { _, pc, continuation in
+            .init(condition: LVReg(result), offset: Int32(continuation.offsetFromHead - pc.offsetFromHead))
+        }
+        iseqBuilder.emitWithLabel(Instruction.br, fail) { _, pc, continuation in
+            Int32(continuation.offsetFromHead - pc.offsetFromHead)
+        }
+        updateInstructionMapping(from: oldPC)
+        retryEnds[retryExpressionOffset + update.end - retryExpression.startIndex] = fail
+    }
+
     // MARK: Main entry point
 
     /// Translate a Wasm expression into a sequence of instructions.
@@ -3440,6 +3474,7 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
                 initializedLocalsHeight: initializedLocals.count
             )
         )
+        try emitAtomicUpdateIfMatched()
     }
 
     mutating func visitLoop(blockType: WasmParser.BlockType) throws(WasmKitError) -> Output {
