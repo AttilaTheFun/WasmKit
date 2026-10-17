@@ -266,6 +266,51 @@ extension Execution {
         return i64XorShiftMulPairReturn(sp: &sp, pc: pc, md: &md, ms: &ms, immediate: finish)
     }
 
+    /// Keep the pairs ordered: the second pair may read a destination of the first.
+    @inline(__always)
+    private func copyFirstPair(sp: Sp, immediate: Instruction.Copy4CallOperand) -> Instruction.Copy2CallOperand {
+        let value0 = sp[immediate.source0]
+        let value1 = sp[immediate.source1]
+        sp[immediate.dest0] = value0
+        sp[immediate.dest1] = value1
+        return .init(source0: immediate.source2, dest0: immediate.dest2,
+            source1: immediate.source3, dest1: immediate.dest3,
+            rawCallee: immediate.rawCallee, arguments: immediate.arguments, spAddend: immediate.spAddend)
+    }
+
+    mutating func compilingCopy4Call(sp: inout Sp, pc: Pc, immediate: Instruction.Copy4CallOperand) throws -> (Pc, CodeSlot) {
+        let remaining = copyFirstPair(sp: sp, immediate: immediate)
+        let value0 = sp[remaining.source0]
+        let value1 = sp[remaining.source1]
+        sp[remaining.dest0] = value0
+        sp[remaining.dest1] = value1
+        let call = Instruction.CallOperand(rawCallee: immediate.rawCallee, arguments: immediate.arguments, spAddend: immediate.spAddend)
+        try call.callee.wasm.ensureCompiled(store: store)
+        let threadingModel = store.value.engine.configuration.threadingModel
+        let (iseq, function) = call.callee.assumeCompiled()
+        let specialized: Bool
+        if threadingModel == .direct, case .compiled = function.code {
+            specialized = iseq.isDirectAddMixReturn
+        } else {
+            specialized = false
+        }
+        let patched = specialized ? Instruction.internalCopy4ArithmeticCall(immediate) : Instruction.internalCopy4Call(immediate)
+        pc.advanced(by: -5).pointee = patched.headSlotInline(threadingModel: threadingModel)
+        return try internalCallSlow(sp: &sp, pc: pc, immediate: call)
+    }
+
+    @inline(__always)
+    mutating func internalCopy4Call(sp: inout Sp, pc: Pc, immediate: Instruction.Copy4CallOperand) -> (Pc, CodeSlot) {
+        let remaining = copyFirstPair(sp: sp, immediate: immediate)
+        return internalCopy2Call(sp: &sp, pc: pc, immediate: remaining)
+    }
+
+    @inline(__always)
+    mutating func internalCopy4ArithmeticCall(sp: inout Sp, pc: Pc, md: inout Md, ms: inout Ms, immediate: Instruction.Copy4CallOperand) -> (Pc, CodeSlot) {
+        let remaining = copyFirstPair(sp: sp, immediate: immediate)
+        return internalCopy2ArithmeticCall(sp: &sp, pc: pc, md: &md, ms: &ms, immediate: remaining)
+    }
+
     @inline(__always)
     mutating func internalCopy2Call(sp: inout Sp, pc: Pc, immediate: Instruction.Copy2CallOperand) -> (Pc, CodeSlot) {
         let value0 = sp[immediate.source0]

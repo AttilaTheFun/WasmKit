@@ -51,3 +51,41 @@ import WAT
         #endif
     }
 }
+
+@Suite struct CopyFourCallTests {
+    @Test(arguments: [EngineConfiguration.ThreadingModel.direct, .token])
+    func fourArgumentsAndCallerLocals(threadingModel: EngineConfiguration.ThreadingModel) throws {
+        let module = try parseWasm(bytes: wat2wasm("""
+            (module
+              (func $combine (param i64 i64 i64 i64) (result i64)
+                local.get 0 local.get 1 i64.sub
+                local.get 2 i64.add local.get 3 i64.sub)
+              (func $large (param i64 i64 i64 i64) (result i64)
+                (local i64 i64 i64 i64 i64 i64 i64 i64 i64 i64
+                       i64 i64 i64 i64 i64 i64 i64 i64 i64 i64)
+                local.get 0 local.get 1 local.get 2 local.get 3 call $combine
+                local.get 23 i64.add)
+              (func (export "small") (param i64 i64 i64 i64) (result i64)
+                local.get 3 local.get 2 local.get 1 local.get 0 call $combine
+                local.get 0 i64.add)
+              (func (export "large") (param i64 i64 i64 i64) (result i64)
+                local.get 3 local.get 2 local.get 1 local.get 0 call $large
+                local.get 0 i64.add))
+            """))
+        let store = Store(engine: Engine(configuration: .init(threadingModel: threadingModel)))
+        let instance = try module.instantiate(store: store)
+        for name in ["small", "large"] {
+            let f = try #require(instance.exports[function: name])
+            for x: UInt64 in [0, 1, 17, .max] {
+                #expect(try f([.i64(x), .i64(11), .i64(7), .i64(31)]) == [.i64(35)])
+            }
+        }
+        #if Disassembler
+        let dumpStore = Store(engine: Engine(configuration: .init(threadingModel: threadingModel)))
+        let dumpInstance = try module.instantiate(store: dumpStore)
+        var listing = ""
+        try dumpInstance.dumpFunctions(to: &listing, module: module)
+        if threadingModel == .direct { #expect(listing.contains("compilingCopy4Call")) }
+        #endif
+    }
+}

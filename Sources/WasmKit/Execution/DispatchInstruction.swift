@@ -467,6 +467,9 @@ extension Execution {
         case 752: return self.execute_i64XorShiftMulPair(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 753: return self.execute_i64XorShiftMulPairReturn(sp: &sp, pc: &pc, md: &md, ms: &ms)
         case 755: return self.execute_internalCopy2ArithmeticCall(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 756: return try self.execute_compilingCopy4Call(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 757: return self.execute_internalCopy4Call(sp: &sp, pc: &pc, md: &md, ms: &ms)
+        case 758: return self.execute_internalCopy4ArithmeticCall(sp: &sp, pc: &pc, md: &md, ms: &ms)
         default: preconditionFailure("Unknown instruction!?")
 
         }
@@ -7400,6 +7403,27 @@ sp.pointee[i64: immediate.result] = (first ^ (first &>> UInt64(immediate.shift1)
         let immediate = Instruction.Copy2CallOperand.load(from: &pc.pointee)
         let next: CodeSlot
         (pc.pointee, next) = self.internalCopy2ArithmeticCall(sp: &sp.pointee, pc: pc.pointee, md: &md.pointee, ms: &ms.pointee, immediate: immediate)
+        return next
+    }
+    @_silgen_name("wasmkit_execute_compilingCopy4Call") @inline(__always)
+    mutating func execute_compilingCopy4Call(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) throws -> CodeSlot {
+        let immediate = Instruction.Copy4CallOperand.load(from: &pc.pointee)
+        let next: CodeSlot
+        (pc.pointee, next) = try self.compilingCopy4Call(sp: &sp.pointee, pc: pc.pointee, immediate: immediate)
+        return next
+    }
+    @_silgen_name("wasmkit_execute_internalCopy4Call") @inline(__always)
+    mutating func execute_internalCopy4Call(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.Copy4CallOperand.load(from: &pc.pointee)
+        let next: CodeSlot
+        (pc.pointee, next) = self.internalCopy4Call(sp: &sp.pointee, pc: pc.pointee, immediate: immediate)
+        return next
+    }
+    @_silgen_name("wasmkit_execute_internalCopy4ArithmeticCall") @inline(__always)
+    mutating func execute_internalCopy4ArithmeticCall(sp: UnsafeMutablePointer<Sp>, pc: UnsafeMutablePointer<Pc>, md: UnsafeMutablePointer<Md>, ms: UnsafeMutablePointer<Ms>) -> CodeSlot {
+        let immediate = Instruction.Copy4CallOperand.load(from: &pc.pointee)
+        let next: CodeSlot
+        (pc.pointee, next) = self.internalCopy4ArithmeticCall(sp: &sp.pointee, pc: pc.pointee, md: &md.pointee, ms: &ms.pointee, immediate: immediate)
         return next
     }
 }

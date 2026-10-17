@@ -2069,6 +2069,15 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             return (value.operand, value.position)
         }
         /// The last emitted single copy, for pairing it with the next one.
+        private var lastCopyPair: (operand: Instruction.CopyStack2Operand, position: MetaProgramCounter, end: MetaProgramCounter)?
+        private var previousCopyPair: (operand: Instruction.CopyStack2Operand, position: MetaProgramCounter, end: MetaProgramCounter)?
+        fileprivate var copyPairsForCall: (first: Instruction.CopyStack2Operand, second: Instruction.CopyStack2Operand, position: MetaProgramCounter)? {
+            guard let last = lastCopyPair, let previous = previousCopyPair,
+                last.end.offsetFromHead == insertingPC.offsetFromHead,
+                previous.end.offsetFromHead == last.position.offsetFromHead,
+                canRewind(to: previous.position) else { return nil }
+            return (previous.operand, last.operand, previous.position)
+        }
         private var lastReturnCopy: (instruction: Instruction, position: MetaProgramCounter, end: MetaProgramCounter)?
         fileprivate var returnCopy: (instruction: Instruction, position: MetaProgramCounter)? {
             guard let copy = lastReturnCopy, copy.end.offsetFromHead == insertingPC.offsetFromHead,
@@ -2278,6 +2287,10 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             if let prior = lastXorMultiplyPair, prior.end.offsetFromHead > position.offsetFromHead {
                 lastXorMultiplyPair = nil
             }
+            if let pair = lastCopyPair, pair.end.offsetFromHead > position.offsetFromHead {
+                lastCopyPair = nil
+                previousCopyPair = nil
+            }
             instructions.removeLast(instructions.count - position.offsetFromHead)
             resetLastEmission()
             lastAccAndSlot = nil
@@ -2412,6 +2425,10 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
                 lastArithmeticReturn = (.init(
                     result: producer.operand.result, input: producer.operand.input, shift: producer.operand.shift, dest: copy.dest
                 ), producer.position, insertingPC)
+            }
+            if case .copyStack2(let operand) = instruction {
+                previousCopyPair = lastCopyPair.flatMap { $0.end.offsetFromHead == position.offsetFromHead ? $0 : nil }
+                lastCopyPair = (operand, position, insertingPC)
             }
             switch instruction {
             case .copyStack(let operand): lastReturnCopy = (.returnCopy(operand), position, insertingPC)
@@ -4173,6 +4190,17 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
             spAddend = LVReg(slotIndex: spAddendSlotIndex)
             if module.isSameInstance(wasm.instance) {
                 let call = Instruction.CallOperand(callee: callee, arguments: arguments, spAddend: spAddend)
+                if !module.isDebuggable, let pairs = iseqBuilder.copyPairsForCall {
+                    iseqBuilder.rewind(to: pairs.position)
+                    rewindInstructionMapping(to: pairs.position)
+                    emit(.compilingCopy4Call(.init(
+                        source0: pairs.first.source0, dest0: pairs.first.dest0,
+                        source1: pairs.first.source1, dest1: pairs.first.dest1,
+                        source2: pairs.second.source0, dest2: pairs.second.dest0,
+                        source3: pairs.second.source1, dest3: pairs.second.dest1,
+                        rawCallee: call.rawCallee, arguments: arguments, spAddend: spAddend)))
+                    return
+                }
                 if !module.isDebuggable, let copy = iseqBuilder.returnCopy {
                     let fused: Instruction?
                     switch copy.instruction {

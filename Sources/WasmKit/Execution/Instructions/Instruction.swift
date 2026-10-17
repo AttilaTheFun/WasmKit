@@ -2452,6 +2452,12 @@ enum Instruction {
     case i32AddImmBrIf(Instruction.I32AddImmBrIfOperand)
     /// Copy two arguments and execute an exact two-instruction arithmetic callee
     case internalCopy2ArithmeticCall(Instruction.Copy2CallOperand)
+    /// Copy two ordered argument pairs and compile an internal call
+    case compilingCopy4Call(Instruction.Copy4CallOperand)
+    /// Copy two ordered argument pairs and call
+    case internalCopy4Call(Instruction.Copy4CallOperand)
+    /// Copy two ordered argument pairs and call an exact arithmetic body
+    case internalCopy4ArithmeticCall(Instruction.Copy4CallOperand)
 }
 
 extension Instruction {
@@ -3957,6 +3963,33 @@ extension Instruction {
             emitSlot { unsafeBitCast(($0.offset, 0, 0, 0, 0) as (Int32, UInt8, UInt8, UInt8, UInt8), to: CodeSlot.self) }
         }
     }
+
+    struct Copy4CallOperand: InstructionImmediate {
+        var source0: VReg
+        var dest0: VReg
+        var source1: VReg
+        var dest1: VReg
+        var source2: VReg
+        var dest2: VReg
+        var source3: VReg
+        var dest3: VReg
+        var rawCallee: UInt64
+        var arguments: VReg
+        var spAddend: LVReg
+        @inline(__always) static func load(from pc: inout Pc) -> Self {
+            let (source0, dest0, source1, dest1) = pc.read((VReg, VReg, VReg, VReg).self)
+            let (source2, dest2, source3, dest3) = pc.read((VReg, VReg, VReg, VReg).self)
+            let (rawCallee) = pc.read((UInt64).self)
+            let (arguments, spAddend) = pc.read((VReg, LVReg).self)
+            return Self(source0: source0, dest0: dest0, source1: source1, dest1: dest1, source2: source2, dest2: dest2, source3: source3, dest3: dest3, rawCallee: rawCallee, arguments: arguments, spAddend: spAddend)
+        }
+        @inline(__always) static func emit(to emitSlot: ((Self) -> CodeSlot) -> Void) {
+            emitSlot { unsafeBitCast(($0.source0, $0.dest0, $0.source1, $0.dest1) as (VReg, VReg, VReg, VReg), to: CodeSlot.self) }
+            emitSlot { unsafeBitCast(($0.source2, $0.dest2, $0.source3, $0.dest3) as (VReg, VReg, VReg, VReg), to: CodeSlot.self) }
+            emitSlot { $0.rawCallee }
+            emitSlot { unsafeBitCast(($0.arguments, $0.spAddend) as (VReg, LVReg), to: CodeSlot.self) }
+        }
+    }
 }
 
 extension Instruction {
@@ -4706,6 +4739,9 @@ extension Instruction {
         case .i64XorShiftMulPairReturn(let immediate): return immediate
         case .i32AddImmBrIf(let immediate): return immediate
         case .internalCopy2ArithmeticCall(let immediate): return immediate
+        case .compilingCopy4Call(let immediate): return immediate
+        case .internalCopy4Call(let immediate): return immediate
+        case .internalCopy4ArithmeticCall(let immediate): return immediate
         default: return nil
         }
     }
@@ -5459,6 +5495,9 @@ extension Instruction {
         case .i64XorShiftMulPairReturn(let immediate): immediate.emit(to: emit)
         case .i32AddImmBrIf(let immediate): immediate.emit(to: emit)
         case .internalCopy2ArithmeticCall(let immediate): immediate.emit(to: emit)
+        case .compilingCopy4Call(let immediate): immediate.emit(to: emit)
+        case .internalCopy4Call(let immediate): immediate.emit(to: emit)
+        case .internalCopy4ArithmeticCall(let immediate): immediate.emit(to: emit)
         default: return
         }
     }
@@ -6224,13 +6263,16 @@ extension Instruction {
         case .i64XorShiftMulPair: return 752
         case .i64XorShiftMulPairReturn: return 753
         case .i32AddImmBrIf: return 754
-        default: return 755  // .internalCopy2ArithmeticCall
+        case .internalCopy2ArithmeticCall: return 755
+        case .compilingCopy4Call: return 756
+        case .internalCopy4Call: return 757
+        default: return 758  // .internalCopy4ArithmeticCall
         }
     }
 }
 extension Instruction {
     /// The number of opcodes, trap pseudo-instructions included.
-    static let opcodeCount = 756
+    static let opcodeCount = 759
 
     /// Whether only the direct-threaded dispatcher implements this instruction;
     /// `Execution.doExecute` has no case for it.
@@ -7009,6 +7051,9 @@ extension Instruction {
         case 753: return .i64XorShiftMulPairReturn(Instruction.I64XorShiftMulPairReturnOperand.load(from: &pc))
         case 754: return .i32AddImmBrIf(Instruction.I32AddImmBrIfOperand.load(from: &pc))
         case 755: return .internalCopy2ArithmeticCall(Instruction.Copy2CallOperand.load(from: &pc))
+        case 756: return .compilingCopy4Call(Instruction.Copy4CallOperand.load(from: &pc))
+        case 757: return .internalCopy4Call(Instruction.Copy4CallOperand.load(from: &pc))
+        case 758: return .internalCopy4ArithmeticCall(Instruction.Copy4CallOperand.load(from: &pc))
         default: fatalError("Unknown instruction opcode: \(opcode)")
         }
     }
@@ -7779,6 +7824,9 @@ extension Instruction {
         case 753: return "i64XorShiftMulPairReturn"
         case 754: return "i32AddImmBrIf"
         case 755: return "internalCopy2ArithmeticCall"
+        case 756: return "compilingCopy4Call"
+        case 757: return "internalCopy4Call"
+        case 758: return "internalCopy4ArithmeticCall"
         default: fatalError("Unknown instruction index: \(opcode)")
         }
     }

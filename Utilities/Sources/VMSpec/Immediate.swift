@@ -396,6 +396,16 @@ extension VMGen.ImmediateLayout {
         $0.field(name: "spAddend", type: .LVReg)
     }
 
+    static let copy4Call = Self(name: "Copy4CallOperand") {
+        for i in 0..<4 {
+            $0.field(name: "source\(i)", type: .VReg)
+            $0.field(name: "dest\(i)", type: .VReg)
+        }
+        $0.field(name: "rawCallee", type: .UInt64)
+        $0.field(name: "arguments", type: .VReg)
+        $0.field(name: "spAddend", type: .LVReg)
+    }
+
     static let copy2Call = Self(name: "Copy2CallOperand") {
         $0.field(name: "source0", type: .VReg)
         $0.field(name: "dest0", type: .VReg)
