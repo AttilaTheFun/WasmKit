@@ -1921,6 +1921,24 @@ extension VMGen {
         }
         addLoad.mayDispatchToTrap = true
         instructions.append(addLoad)
+        var addVariableLoad = Instruction(name: "i32AddLoad", documentation: "Add wrapping address registers and load i32", useCurrentMemory: .read) {
+            $0.field(name: "lhs", type: .VReg)
+            $0.field(name: "rhs", type: .VReg)
+            $0.field(name: "pointer", type: .VReg)
+            $0.field(name: "result", type: .VReg)
+            $0.field(name: "offset", type: .UInt32)
+        }
+        addVariableLoad.mayDispatchToTrap = true
+        instructions.append(addVariableLoad)
+        var addAccumulatorLoad = Instruction(name: "i32AddAccLoad", documentation: "Add accumulator and register address, then load i32", useCurrentMemory: .read) {
+            $0.field(name: "rhs", type: .VReg)
+            $0.field(name: "pointer", type: .VReg)
+            $0.field(name: "result", type: .VReg)
+            $0.field(name: "offset", type: .UInt32)
+        }
+        addAccumulatorLoad.useIreg = .read
+        addAccumulatorLoad.mayDispatchToTrap = true
+        instructions.append(addAccumulatorLoad)
         var load32 = Instruction(name: "i32LoadMemory32", documentation: "Load i32 with a 32-bit address and static offset", useCurrentMemory: .read, immediateLayout: .accMemoryPointerResult)
         load32.mayDispatchToTrap = true
         instructions.append(load32)

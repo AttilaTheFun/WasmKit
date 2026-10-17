@@ -5165,6 +5165,21 @@ WASMKIT_TC_CC static inline void wasmkit_tc_i32AddImmLoad(Sp sp, Pc pc, Md md, M
     WASMKIT_DEAD_ACCUMULATOR(double, dead_freg);
     WASMKIT_TC_MUSTTAIL return ((wasmkit_tc_exec)next)(sp, pc, md, ms, dead_ireg, dead_freg, state);
 }
+WASMKIT_TC_CC static inline void wasmkit_tc_i32AddLoad(Sp sp, Pc pc, Md md, Ms ms, uint64_t ireg, double freg, WASMKIT_TC_CONTEXT void *state) {
+    SWIFT_CC(swift) uint64_t wasmkit_execute_i32AddLoad(Sp *sp, Pc *pc, Md *md, Ms *ms, SWIFT_CONTEXT void *state, SWIFT_ERROR_RESULT void **error);
+    void * _Nullable error = NULL; uint64_t next;
+    INLINE_CALL next = wasmkit_execute_i32AddLoad(&sp, &pc, &md, &ms, state, &error);
+    WASMKIT_DEAD_ACCUMULATOR(uint64_t, dead_ireg);
+    WASMKIT_DEAD_ACCUMULATOR(double, dead_freg);
+    WASMKIT_TC_MUSTTAIL return ((wasmkit_tc_exec)next)(sp, pc, md, ms, dead_ireg, dead_freg, state);
+}
+WASMKIT_TC_CC static inline void wasmkit_tc_i32AddAccLoad(Sp sp, Pc pc, Md md, Ms ms, uint64_t ireg, double freg, WASMKIT_TC_CONTEXT void *state) {
+    SWIFT_CC(swift) uint64_t wasmkit_execute_i32AddAccLoad(Sp *sp, Pc *pc, Md *md, Ms *ms, uint64_t *ireg, SWIFT_CONTEXT void *state, SWIFT_ERROR_RESULT void **error);
+    void * _Nullable error = NULL; uint64_t next;
+    INLINE_CALL next = wasmkit_execute_i32AddAccLoad(&sp, &pc, &md, &ms, &ireg, state, &error);
+    WASMKIT_DEAD_ACCUMULATOR(double, dead_freg);
+    WASMKIT_TC_MUSTTAIL return ((wasmkit_tc_exec)next)(sp, pc, md, ms, ireg, dead_freg, state);
+}
 WASMKIT_TC_CC static inline void wasmkit_tc_i32LoadMemory32(Sp sp, Pc pc, Md md, Ms ms, uint64_t ireg, double freg, WASMKIT_TC_CONTEXT void *state) {
     SWIFT_CC(swift) uint64_t wasmkit_execute_i32LoadMemory32(Sp *sp, Pc *pc, Md *md, Ms *ms, SWIFT_CONTEXT void *state, SWIFT_ERROR_RESULT void **error);
     void * _Nullable error = NULL; uint64_t next;
@@ -6010,6 +6025,8 @@ static const uintptr_t wasmkit_tc_exec_handlers[] = {
     (uintptr_t)((wasmkit_tc_exec)&wasmkit_tc_i32GlobalAddSet),
     (uintptr_t)((wasmkit_tc_exec)&wasmkit_tc_i32GlobalSubSet),
     (uintptr_t)((wasmkit_tc_exec)&wasmkit_tc_i32AddImmLoad),
+    (uintptr_t)((wasmkit_tc_exec)&wasmkit_tc_i32AddLoad),
+    (uintptr_t)((wasmkit_tc_exec)&wasmkit_tc_i32AddAccLoad),
     (uintptr_t)((wasmkit_tc_exec)&wasmkit_tc_i32LoadMemory32),
     (uintptr_t)((wasmkit_tc_exec)&wasmkit_tc_returnCopy),
     (uintptr_t)((wasmkit_tc_exec)&wasmkit_tc_returnCopy2),

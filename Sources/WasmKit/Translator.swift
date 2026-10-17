@@ -4865,6 +4865,24 @@ struct InstructionTranslator: ~Copyable, InstructionVisitor {
         let result = valueStack.push(load.type)
         guard let pointer else { return }
         if load == .i32Load, let accCandidate,
+            accCandidate.form.result == pointer, iseqBuilder.canRewind(to: accCandidate) {
+            let make: ((VReg) -> Instruction)?
+            switch accCandidate.form {
+            case .binary(.i32, .add, let lhs, let rhs, _):
+                make = { .i32AddLoad(.init(lhs: lhs, rhs: rhs, pointer: pointer, result: $0, offset: offset)) }
+            case .fromAcc(.i32, .add, let rhs, _):
+                make = { .i32AddAccLoad(.init(rhs: rhs, pointer: pointer, result: $0, offset: offset)) }
+            default:
+                make = nil
+            }
+            if let make {
+                iseqBuilder.rewind(to: accCandidate.position)
+                rewindInstructionMapping(to: accCandidate.position)
+                emit(make(result), resultRelink: { make($0) })
+                return
+            }
+        }
+        if load == .i32Load, let accCandidate,
             case .binaryImm(.i32, .add, let lhs, let imm, let address) = accCandidate.form,
             address == pointer, iseqBuilder.canRewind(to: accCandidate) {
             iseqBuilder.rewind(to: accCandidate.position)

@@ -46,6 +46,24 @@ extension Execution {
         return nil
     }
 
+    @inline(__always)
+    mutating func memoryLoadAddingRegisters(sp: Sp, md: Md, ms: Ms, immediate: Instruction.I32AddLoadOperand) -> MemoryAccessTrap? {
+        let pointer = sp[i32: immediate.lhs] &+ sp[i32: immediate.rhs]
+        sp[i32: immediate.pointer] = pointer
+        return memoryLoadFromAcc(sp: sp, md: md, ms: ms, ireg: UInt64(pointer),
+            loadOperand: .init(result: immediate.result, offset: immediate.offset),
+            loadAs: UInt32.self, castToValue: { .i32($0) })
+    }
+
+    @inline(__always)
+    mutating func memoryLoadAddingAccumulator(sp: Sp, md: Md, ms: Ms, ireg: UInt64, immediate: Instruction.I32AddAccLoadOperand) -> MemoryAccessTrap? {
+        let pointer = UInt32(truncatingIfNeeded: ireg) &+ sp[i32: immediate.rhs]
+        sp[i32: immediate.pointer] = pointer
+        return memoryLoadFromAcc(sp: sp, md: md, ms: ms, ireg: UInt64(pointer),
+            loadOperand: .init(result: immediate.result, offset: immediate.offset),
+            loadAs: UInt32.self, castToValue: { .i32($0) })
+    }
+
     mutating func memoryLoadAddingImmediate(sp: Sp, md: Md, ms: Ms, immediate: Instruction.I32AddImmLoadOperand) -> MemoryAccessTrap? {
         let pointer = sp[i32: immediate.lhs] &+ UInt32(bitPattern: immediate.imm)
         sp[i32: immediate.pointer] = pointer
